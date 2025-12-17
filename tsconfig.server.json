@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "rootDir": ".",
+    "outDir": "dist/server",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["server/**/*.ts", "shared/**/*.ts", "vite.config.ts", "vite-plugin-meta-images.ts"]
+}
