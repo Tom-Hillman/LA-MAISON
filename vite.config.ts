@@ -8,7 +8,10 @@ import { metaImagesPlugin } from "./vite-plugin-meta-images";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
+
 export default defineConfig({
+  base: "/LA-MAISON/",
   plugins: [
     react(),
     tailwindcss(),
