@@ -180,7 +180,7 @@ const formatUSD = (n: number) =>
 type Lang = "en" | "es";
 const copy = {
     en: {
-        nav: { home: "HOME", who: "PHILOSOPHY", properties: "PROPERTIES", lifestyle: "LIFESTYLE", contact: "CONTACT" },
+        nav: { home: "HOME", who: "ABOUT US", properties: "PROPERTIES", lifestyle: "LIFESTYLE", contact: "CONTACT" },
         properties: { title: "PROPERTIES", inquire: "INQUIRE" },
         contact: { title: "CONTACT", send: "SEND MESSAGE", name: "Name", email: "Email", message: "Message" },
     },
@@ -709,7 +709,7 @@ export default function HomeMexicoSite() {
                     </motion.div>
                 </section>
 
-                {/* OUR PHILOSOPHY */}
+                {/* OUR ABOUT US */}
                 <section id="who" className="relative py-32 bg-[#1a1a1a] text-[#F5F1EA] overflow-hidden">
                     <div className="absolute inset-0 opacity-20">
                         <img src={TEXTILE_IMG} className="w-full h-full object-cover grayscale opacity-50" alt="Texture" />
@@ -721,7 +721,7 @@ export default function HomeMexicoSite() {
                         </div>
                         <div className="w-full md:w-1/2 space-y-8">
                             <Reveal>
-                                <span className="text-[#B78454] text-xs tracking-[0.2em] font-bold block mb-4">THE PHILOSOPHY</span>
+                                <span className="text-[#B78454] text-xs tracking-[0.2em] font-bold block mb-4">ABOUT US</span>
                                 <h2 className="text-4xl md:text-5xl font-serif leading-tight">
                                     {lang === "en" ? "Architecture grounded in nature." : "Arquitectura arraigada en la naturaleza."}
                                 </h2>
