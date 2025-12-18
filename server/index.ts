@@ -4,6 +4,8 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 
 const app = express();
+app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+
 const httpServer = createServer(app);
 
 declare module "http" {
