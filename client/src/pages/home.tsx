@@ -8,8 +8,6 @@ import {
     AnimatePresence,
 } from "framer-motion";
 import {
-    ChevronRight,
-    ChevronLeft,
     Home as HomeIcon,
     Search,
     Info,
@@ -22,8 +20,10 @@ import {
     Ruler,
     X,
     ArrowDown,
+    Share2,
 } from "lucide-react";
 import Lenis from "lenis";
+import { useLocation } from "wouter";
 
 // shadcn/ui
 import { Button } from "@/components/ui/button";
@@ -40,21 +40,12 @@ import BEACH_IMG from "@assets/generated_images/luxury_beach_club_tulum.png";
 import DINING_IMG from "@assets/generated_images/mexican_fine_dining_detail.png";
 import TEXTILE_IMG from "@assets/generated_images/artisanal_mexican_textiles.png";
 
+import { LISTINGS, LISTING_IMAGES, formatUSD, type Listing } from "@/data/listings";
+
 // ---------------- Images ----------------
 const HERO_PRIMARY = HERO_PRIMARY_IMG;
 const HERO_FALLBACK =
     "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=2400&q=80";
-
-const LISTING_IMAGES = [
-    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1501183638710-841dd1904471?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1502005097973-6a7082348e28?auto=format&fit=crop&w=1600&q=80",
-];
 
 function safeImage(primary: string, fallback: string) {
     return {
@@ -72,122 +63,118 @@ function cn(...classes: Array<string | false | undefined | null>) {
     return classes.filter(Boolean).join(" ");
 }
 
-// ---------------- Brand mark: “La Maison” with L and N 25% larger ----------------
-
-
-// ---------------- Data ----------------
-type Listing = {
-    id: string;
-    title: string;
-    location: string;
-    priceUSD: number;
-    beds: number;
-    baths: number;
-    areaM2: number;
-    type: "Hacienda" | "Villa" | "Casa" | "Condo";
-    image: string;
-    photos: string[];
-    description: { en: string; es: string };
-};
-
-const LISTINGS: Listing[] = [
-    {
-        id: "LM-001",
-        title: "Hacienda Santa Luna",
-        location: "Mérida, Yucatán",
-        priceUSD: 625000,
-        beds: 4,
-        baths: 4,
-        areaM2: 420,
-        type: "Hacienda",
-        image: LISTING_IMAGES[4],
-        photos: [LISTING_IMAGES[4], LISTING_IMAGES[4], LISTING_IMAGES[6], LISTING_IMAGES[7]],
-        description: {
-            en: "Courtyard-centered hacienda with double-height living, hand-finished plaster, and warm quiet light throughout.",
-            es: "Hacienda con patio central, sala de doble altura, estuco artesanal y una luz cálida y tranquila.",
-        },
-    },
-    {
-        id: "LM-003",
-        title: "Villa Agave Verde",
-        location: "Tulum, Quintana Roo",
-        priceUSD: 399000,
-        beds: 2,
-        baths: 2,
-        areaM2: 180,
-        type: "Villa",
-        image: LISTING_IMAGES[2],
-        photos: [LISTING_IMAGES[2], LISTING_IMAGES[7], LISTING_IMAGES[0], LISTING_IMAGES[6]],
-        description: {
-            en: "Modern tropical villa designed for privacy—clean lines, shaded terraces, and a strong short-term rental flow.",
-            es: "Villa tropical moderna diseñada para privacidad—líneas limpias, terrazas sombreadas y buena renta vacacional.",
-        },
-    },
-    {
-        id: "LM-004",
-        title: "Departamento Centro Histórico",
-        location: "Ciudad de México",
-        priceUSD: 265000,
-        beds: 2,
-        baths: 1,
-        areaM2: 92,
-        type: "Condo",
-        image: LISTING_IMAGES[3],
-        photos: [LISTING_IMAGES[3], LISTING_IMAGES[1], LISTING_IMAGES[5], LISTING_IMAGES[6]],
-        description: {
-            en: "A walkable central base with timeless materials and practical proportions—ideal as a stable city anchor.",
-            es: "Base céntrica y caminable con materiales atemporales y proporciones prácticas—ideal como activo urbano.",
-        },
-    },
-    {
-        id: "LM-005",
-        title: "Hacienda del Sol",
-        location: "Campeche, Campeche",
-        priceUSD: 755000,
-        beds: 5,
-        baths: 5,
-        areaM2: 520,
-        type: "Hacienda",
-        image: LISTING_IMAGES[4],
-        photos: [LISTING_IMAGES[4], LISTING_IMAGES[0], LISTING_IMAGES[2], LISTING_IMAGES[7]],
-        description: {
-            en: "Grand-scale entertaining with generous indoor-outdoor rhythm—an architectural statement with warmth.",
-            es: "Escala generosa para recibir con ritmo interior-exterior—una propiedad icónica con calidez.",
-        },
-    },
-    {
-        id: "LM-006",
-        title: "Casa Patio de Crema",
-        location: "Oaxaca, Oaxaca",
-        priceUSD: 315000,
-        beds: 2,
-        baths: 2,
-        areaM2: 165,
-        type: "Casa",
-        image: LISTING_IMAGES[5],
-        photos: [LISTING_IMAGES[5], LISTING_IMAGES[6], LISTING_IMAGES[3], LISTING_IMAGES[1]],
-        description: {
-            en: "Warm tones, compact courtyard mood, and a slow-living feel—perfect for culture-forward buyers.",
-            es: "Tonos cálidos, ambiente de patio y sensación de vida lenta—ideal para compradores amantes de la cultura.",
-        },
-    },
-];
-
-const formatUSD = (n: number) =>
-    n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-
 // ---------------- i18n ----------------
 type Lang = "en" | "es";
+
 const copy = {
     en: {
-        nav: { home: "HOME", who: "ABOUT US", properties: "PROPERTIES", lifestyle: "LIFESTYLE", contact: "CONTACT" },
-        properties: { title: "PROPERTIES", inquire: "INQUIRE" },
+        nav: { home: "HOME", who: "WHY INVEST", properties: "PROPERTIES", lifestyle: "LIFESTYLE", contact: "CONTACT" },
+        properties: { title: "PROPERTIES", inquire: "INQUIRE", share: "SHARE" },
         contact: { title: "CONTACT", send: "SEND MESSAGE", name: "Name", email: "Email", message: "Message" },
+
+        why: {
+            label: "WHY INVEST WITH US",
+            headline: "Local execution. Global-level service.",
+            pitch:
+                "We help you buy, set up, and own property in Mexico with less friction—better decisions, faster timelines, and trusted on-the-ground support.",
+        },
+
+        lifestyle: {
+            title: "Lifestyle",
+            subtitle:
+                "Click to explore where we operate, how we take care of your home, and what we do for buyers and owners.",
+            cards: {
+                locations: { title: "Locations", subtitle: "Where we operate" },
+                homecare: { title: "Home Care (A–Z)", subtitle: "We handle it end-to-end" },
+                global: { title: "Global Access", subtitle: "Who we are & what we do" },
+            },
+        },
+
+        overlays: {
+            locations: {
+                title: "Locations",
+                body:
+                    "We operate across key areas in the Riviera Maya and Yucatán, with local partners and on-the-ground execution.",
+                listTitle: "Active areas",
+                list: ["Playa del Carmen", "Tulum", "Cancún", "Mérida", "Countryside"],
+            },
+            homecare: {
+                title: "Home Care (A–Z)",
+                body:
+                    "From the moment you buy to the way the home lives day-to-day—our team coordinates everything so ownership feels simple.",
+                bullets: [
+                    { h: "Design & Setup", t: "Layout direction, finishes, furnishing and staging—aligned with your home’s identity." },
+                    { h: "Import & Logistics", t: "Sourcing, deliveries, customs coordination (when needed), and installation scheduling." },
+                    { h: "Care While You’re Away", t: "Checks, cleaning, maintenance, small repairs, and trusted local coordination." },
+                    { h: "Renting it Out", t: "Setup guidance and coordination—photos, turnover, and basic operational support." },
+                ],
+            },
+            about: {
+                title: "Who We Are",
+                body:
+                    "LA MAISON is a boutique property platform focused on Mexico. We curate strong homes and support buyers and owners with practical, local execution.",
+                bullets: [
+                    { h: "Curated properties", t: "Homes selected for quality, location, and long-term value." },
+                    { h: "Local execution", t: "We coordinate viewings, paperwork touchpoints, and trusted on-the-ground partners." },
+                    { h: "Owner support", t: "Design, setup, care, and light operations so ownership stays frictionless." },
+                ],
+            },
+        },
     },
+
     es: {
-        nav: { home: "INICIO", who: "FILOSOFÍA", properties: "PROPIEDADES", lifestyle: "ESTILO DE VIDA", contact: "CONTACTO" },
-        properties: { title: "PROPIEDADES", inquire: "CONSULTAR" },
+        nav: { home: "INICIO", who: "POR QUÉ INVERTIR", properties: "PROPIEDADES", lifestyle: "ESTILO DE VIDA", contact: "CONTACTO" },
+        properties: { title: "PROPIEDADES", inquire: "CONSULTAR", share: "COMPARTIR" },
         contact: { title: "CONTACTO", send: "ENVIAR MENSAJE", name: "Nombre", email: "Correo", message: "Mensaje" },
+
+        why: {
+            label: "POR QUÉ INVERTIR CON NOSOTROS",
+            headline: "Ejecución local. Servicio de nivel global.",
+            pitch:
+                "Te ayudamos a comprar, preparar y gestionar propiedad en México con menos fricción—mejores decisiones, tiempos más rápidos y apoyo confiable en el terreno.",
+        },
+
+        lifestyle: {
+            title: "Estilo de Vida",
+            subtitle:
+                "Haz clic para ver dónde operamos, cómo cuidamos tu casa y qué hacemos para compradores y propietarios.",
+            cards: {
+                locations: { title: "Ubicaciones", subtitle: "Dónde operamos" },
+                homecare: { title: "Cuidado del Hogar (A–Z)", subtitle: "Lo gestionamos de principio a fin" },
+                global: { title: "Acceso Global", subtitle: "Quiénes somos y qué hacemos" },
+            },
+        },
+
+        overlays: {
+            locations: {
+                title: "Ubicaciones",
+                body:
+                    "Operamos en zonas clave de la Riviera Maya y Yucatán, con aliados locales y ejecución en el terreno.",
+                listTitle: "Zonas activas",
+                list: ["Playa del Carmen", "Tulum", "Cancún", "Mérida", "Zona rural"],
+            },
+            homecare: {
+                title: "Cuidado del Hogar (A–Z)",
+                body:
+                    "Desde la compra hasta la operación del día a día—coordinamos todo para que ser propietario sea simple.",
+                bullets: [
+                    { h: "Diseño y Preparación", t: "Distribución, acabados, mobiliario y ambientación alineados con la identidad de tu hogar." },
+                    { h: "Importación y Logística", t: "Compras, entregas, aduana (si aplica) y coordinación de instalación." },
+                    { h: "Cuidado Cuando No Estás", t: "Revisiones, limpieza, mantenimiento, reparaciones menores y coordinación local." },
+                    { h: "Renta", t: "Guía y coordinación—fotos, rotación y soporte operativo básico." },
+                ],
+            },
+            about: {
+                title: "Quiénes Somos",
+                body:
+                    "LA MAISON es una plataforma boutique enfocada en México. Curamos propiedades sólidas y apoyamos a compradores y propietarios con ejecución práctica y local.",
+                bullets: [
+                    { h: "Propiedades curadas", t: "Casas seleccionadas por calidad, ubicación y valor a largo plazo." },
+                    { h: "Ejecución local", t: "Coordinamos visitas, puntos clave del papeleo y aliados confiables." },
+                    { h: "Soporte al propietario", t: "Diseño, preparación, cuidado y operación ligera para minimizar fricción." },
+                ],
+            },
+        },
     },
 } as const;
 
@@ -228,12 +215,7 @@ function Preloader({ onComplete }: { onComplete: () => void }) {
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         className="flex flex-col items-center gap-4"
                     >
-                        <div className="text-3xl md:text-5xl">
-                            <div className="font-serif tracking-[0.2em] text-3xl md:text-5xl">
-                                LA MAISON
-                            </div>
-
-                        </div>
+                        <div className="font-serif tracking-[0.2em] text-3xl md:text-5xl">LA MAISON</div>
                         <div className="h-[1px] w-28 bg-[#B78454]/50 overflow-hidden relative">
                             <motion.div
                                 className="absolute inset-0 bg-[#B78454]"
@@ -242,7 +224,6 @@ function Preloader({ onComplete }: { onComplete: () => void }) {
                                 transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                             />
                         </div>
-
                         <p className="text-[10px] tracking-[0.3em] uppercase opacity-50">Mexico</p>
                     </motion.div>
                 </motion.div>
@@ -251,7 +232,7 @@ function Preloader({ onComplete }: { onComplete: () => void }) {
     );
 }
 
-// ---------------- Custom cursor (kept; no jiggle effects) ----------------
+// ---------------- Custom cursor ----------------
 function CustomCursor() {
     const p = usePointer();
     const x = useSpring(p.x, { stiffness: 700, damping: 45, mass: 0.6 });
@@ -478,7 +459,16 @@ function ScrollProgress() {
     );
 }
 
-// ---------------- WhatsApp button (unchanged here) ----------------
+// ---------------- WhatsApp Logo (inline SVG) ----------------
+function WhatsAppLogo({ className }: { className?: string }) {
+    return (
+        <svg viewBox="0 0 32 32" aria-hidden="true" className={className} fill="currentColor">
+            <path d="M19.11 17.53c-.27-.14-1.6-.79-1.84-.88-.25-.09-.43-.14-.61.14-.18.27-.7.88-.86 1.06-.16.18-.31.2-.58.07-.27-.14-1.14-.42-2.18-1.35-.81-.72-1.36-1.6-1.52-1.87-.16-.27-.02-.42.12-.56.12-.12.27-.31.41-.47.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.47-.07-.14-.61-1.47-.84-2.01-.22-.53-.45-.46-.61-.47l-.52-.01c-.18 0-.47.07-.72.34-.25.27-.95.93-.95 2.27 0 1.33.98 2.62 1.11 2.8.14.18 1.93 2.95 4.68 4.13.66.28 1.17.45 1.57.58.66.21 1.26.18 1.73.11.53-.08 1.6-.65 1.83-1.28.23-.63.23-1.17.16-1.28-.07-.11-.25-.18-.52-.32z" />
+            <path d="M16 3C8.82 3 3 8.82 3 16c0 2.28.59 4.42 1.62 6.28L3 29l6.9-1.81A12.94 12.94 0 0 0 16 29c7.18 0 13-5.82 13-13S23.18 3 16 3zm0 23.5c-2.06 0-3.97-.6-5.58-1.63l-.4-.25-4.1 1.07 1.09-3.99-.26-.41A10.43 10.43 0 0 1 5.5 16C5.5 10.2 10.2 5.5 16 5.5S26.5 10.2 26.5 16 21.8 26.5 16 26.5z" />
+        </svg>
+    );
+}
+
 function WhatsAppFixedButton() {
     const wa = "https://wa.me/34667640713";
     return (
@@ -493,8 +483,95 @@ function WhatsAppFixedButton() {
             whileTap={{ scale: 0.98 }}
             className="fixed bottom-5 right-5 z-40 border border-[#8B4513]/40 bg-black/70 px-4 py-3 text-xs tracking-[0.22em] text-[#F5E6D3] hover:bg-black/80"
         >
-            WHATSAPP
+      <span className="flex items-center gap-2">
+        <WhatsAppLogo className="h-4 w-4" />
+        <span>WHATSAPP</span>
+      </span>
         </motion.a>
+    );
+}
+
+async function sendInquiry(payload: { name: string; email: string; message: string; listingId?: string }) {
+    const res = await fetch("/api/inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Failed to send inquiry");
+    }
+}
+
+async function shareListing(listing: Listing) {
+    const url = `${window.location.origin}/properties/${listing.id}`;
+    const title = `${listing.title} — ${listing.id}`;
+    const text = `${listing.title} (${listing.location})`;
+
+    try {
+        if (navigator.share) {
+            await navigator.share({ title, text, url });
+            return;
+        }
+    } catch {
+        // user cancelled share - ignore
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(url);
+        alert("Link copied!");
+    } catch {
+        prompt("Copy this link:", url);
+    }
+}
+
+type OverlayKey = "locations" | "homecare" | "about";
+
+function FullPageOverlay({
+                             open,
+                             title,
+                             children,
+                             onClose,
+                         }: {
+    open: boolean;
+    title: string;
+    children: React.ReactNode;
+    onClose: () => void;
+}) {
+    return (
+        <AnimatePresence>
+            {open && (
+                <motion.div
+                    className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={onClose}
+                >
+                    <motion.div
+                        className="absolute inset-0 overflow-auto"
+                        initial={{ y: 18, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 18, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="min-h-screen px-6 py-10">
+                            <div className="max-w-4xl mx-auto bg-[#F5F1EA] text-[#1a1a1a] border border-black/10 shadow-2xl">
+                                <div className="flex items-center justify-between px-6 py-5 border-b border-black/10">
+                                    <div className="font-serif text-2xl">{title}</div>
+                                    <button onClick={onClose} className="text-black/60 hover:text-black transition-colors">
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                <div className="px-6 py-8">{children}</div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 }
 
@@ -505,9 +582,24 @@ export default function HomeMexicoSite() {
     const [scrolled, setScrolled] = useState(false);
     const [preloaderDone, setPreloaderDone] = useState(false);
 
-    // Modals
-    const [gallery, setGallery] = useState<{ listing: Listing; idx: number } | null>(null);
+    const [, setLocation] = useLocation();
+
+    // Inquiry modal
     const [inquiry, setInquiry] = useState<Listing | null>(null);
+    const [sending, setSending] = useState(false);
+
+    // Full-page overlays
+    const [overlay, setOverlay] = useState<OverlayKey | null>(null);
+
+    // Contact form state
+    const [contactName, setContactName] = useState("");
+    const [contactEmail, setContactEmail] = useState("");
+    const [contactMsg, setContactMsg] = useState("");
+
+    // Inquiry modal state
+    const [inqName, setInqName] = useState("");
+    const [inqEmail, setInqEmail] = useState("");
+    const [inqMsg, setInqMsg] = useState("");
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 50);
@@ -540,6 +632,16 @@ export default function HomeMexicoSite() {
         };
     }, [preloaderDone]);
 
+    // Scroll to hash if present
+    useEffect(() => {
+        if (!preloaderDone) return;
+        const hash = window.location.hash?.replace("#", "");
+        if (!hash) return;
+        const el = document.getElementById(hash);
+        if (!el) return;
+        setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    }, [preloaderDone]);
+
     const sections = useMemo(
         () => [
             { id: "home", label: copy[lang].nav.home, icon: <HomeIcon className="h-4 w-4" /> },
@@ -558,6 +660,10 @@ export default function HomeMexicoSite() {
         setNavOpen(false);
     };
 
+    const why = copy[lang].why;
+    const lifestyle = copy[lang].lifestyle;
+    const overlays = copy[lang].overlays;
+
     return (
         <>
             <Preloader onComplete={() => setPreloaderDone(true)} />
@@ -574,7 +680,7 @@ export default function HomeMexicoSite() {
                 <ParticleField />
                 <WhatsAppFixedButton />
 
-                {/* Navigation (transparent -> cloudy glassy on scroll) */}
+                {/* Navigation */}
                 <nav
                     className={cn(
                         "fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 transition-all duration-300",
@@ -582,11 +688,7 @@ export default function HomeMexicoSite() {
                     )}
                     style={
                         scrolled
-                            ? {
-                                // subtle “cloud” feel
-                                WebkitBackdropFilter: "blur(18px)",
-                                backdropFilter: "blur(18px)",
-                            }
+                            ? { WebkitBackdropFilter: "blur(18px)", backdropFilter: "blur(18px)" }
                             : undefined
                     }
                 >
@@ -597,20 +699,13 @@ export default function HomeMexicoSite() {
                         LA MAISON
                     </button>
 
-                    <button onClick={() => go("home")}
-                            className="text-xl font-serif tracking-widest font-bold z-50 relative">
-                    </button>
-
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex gap-8">
                             {sections.map((s) => (
                                 <button
                                     key={s.id}
                                     onClick={() => go(s.id)}
-                                    className={cn(
-                                        "text-xs tracking-[0.2em] font-medium transition-colors uppercase",
-                                        scrolled ? "hover:text-[#B78454]" : "hover:text-[#B78454]"
-                                    )}
+                                    className="text-xs tracking-[0.2em] font-medium transition-colors uppercase hover:text-[#B78454]"
                                 >
                                     {s.label}
                                 </button>
@@ -633,22 +728,21 @@ export default function HomeMexicoSite() {
                             </button>
                         </div>
 
-                        {/* Mobile Menu Button */}
                         <button className="md:hidden z-50" onClick={() => setNavOpen(!navOpen)}>
                             {navOpen ? (
-                                <X className="w-6 h-6"/>
+                                <X className="w-6 h-6" />
                             ) : (
                                 <div className="space-y-1.5 w-6">
-                                    <div className="h-0.5 bg-current w-full"/>
-                                    <div className="h-0.5 bg-current w-full"/>
-                                    <div className="h-0.5 bg-current w-full"/>
+                                    <div className="h-0.5 bg-current w-full" />
+                                    <div className="h-0.5 bg-current w-full" />
+                                    <div className="h-0.5 bg-current w-full" />
                                 </div>
                             )}
                         </button>
                     </div>
                 </nav>
 
-                {/* Mobile Menu Overlay */}
+                {/* Mobile Menu */}
                 <AnimatePresence>
                     {navOpen && (
                         <motion.div
@@ -666,7 +760,7 @@ export default function HomeMexicoSite() {
                     )}
                 </AnimatePresence>
 
-                {/* Hero Section */}
+                {/* Hero */}
                 <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
                     <motion.div
                         className="absolute inset-0 z-0"
@@ -688,9 +782,7 @@ export default function HomeMexicoSite() {
 
                                 <div className="flex flex-col items-center">
                                     <SplitTitle text="LA MAISON" className="text-5xl md:text-7xl lg:text-8xl mb-6 font-serif" />
-
                                     <Reveal delay={0.45}>
-                                        {/* Golden line: slightly shorter (roughly A -> O) and a bit thicker */}
                                         <div className="h-[2px] w-[12rem] md:w-[18rem] lg:w-[22rem] max-w-[80vw] bg-[#B78454]/95" />
                                     </Reveal>
                                 </div>
@@ -709,7 +801,7 @@ export default function HomeMexicoSite() {
                     </motion.div>
                 </section>
 
-                {/* OUR ABOUT US */}
+                {/* WHY INVEST */}
                 <section id="who" className="relative py-32 bg-[#1a1a1a] text-[#F5F1EA] overflow-hidden">
                     <div className="absolute inset-0 opacity-20">
                         <img src={TEXTILE_IMG} className="w-full h-full object-cover grayscale opacity-50" alt="Texture" />
@@ -719,33 +811,15 @@ export default function HomeMexicoSite() {
                         <div className="w-full md:w-1/2">
                             <ClipRevealImage src={INTERIOR_IMG} fallback={HERO_FALLBACK} alt="Interior Design" className="aspect-[4/5]" />
                         </div>
+
                         <div className="w-full md:w-1/2 space-y-8">
                             <Reveal>
-                                <span className="text-[#B78454] text-xs tracking-[0.2em] font-bold block mb-4">ABOUT US</span>
-                                <h2 className="text-4xl md:text-5xl font-serif leading-tight">
-                                    {lang === "en" ? "Architecture grounded in nature." : "Arquitectura arraigada en la naturaleza."}
-                                </h2>
+                                <span className="text-[#B78454] text-xs tracking-[0.2em] font-bold block mb-4">{why.label}</span>
+                                <h2 className="text-4xl md:text-5xl font-serif leading-tight">{why.headline}</h2>
                             </Reveal>
 
                             <Reveal delay={0.2}>
-                                <p className="text-lg text-white/70 leading-relaxed font-light">
-                                    {lang === "en"
-                                        ? "Every property in our collection is chosen for its dialogue with the environment. We look for spaces where light, air, and material converge to create a sensory experience. We honor the heritage of Mexican craftsmanship while embracing contemporary living."
-                                        : "Cada propiedad en nuestra colección es elegida por su diálogo con el entorno. Buscamos espacios donde la luz, el aire y el material convergen para crear una experiencia sensorial. Honramos la herencia de la artesanía mexicana mientras abrazamos la vida contemporánea."}
-                                </p>
-                            </Reveal>
-
-                            <Reveal delay={0.4}>
-                                <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10">
-                                    <div>
-                                        <h3 className="text-2xl font-serif mb-2">15+</h3>
-                                        <p className="text-xs tracking-widest text-white/50">YEARS EXPERIENCE</p>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-serif mb-2">$120M+</h3>
-                                        <p className="text-xs tracking-widest text-white/50">SOLD INVENTORY</p>
-                                    </div>
-                                </div>
+                                <p className="text-lg text-white/70 leading-relaxed font-light">{why.pitch}</p>
                             </Reveal>
                         </div>
                     </div>
@@ -756,100 +830,100 @@ export default function HomeMexicoSite() {
                     id="properties"
                     lang={lang}
                     listings={LISTINGS}
-                    onOpen={(l) => setGallery({ listing: l, idx: 0 })}
-                    onInquire={(l) => setInquiry(l)}
+                    onOpen={(l) => setLocation(`/properties/${l.id}`)}
+                    onInquire={(l) => {
+                        setInquiry(l);
+                        setInqMsg("");
+                    }}
+                    onShare={(l) => shareListing(l)}
                 />
 
-                {/* Lifestyle / Locations Grid (unchanged) */}
+                {/* LIFESTYLE (3 clickable cards) */}
                 <section id="lifestyle" className="py-24 bg-[#F5F1EA]">
                     <div className="container mx-auto px-6">
                         <div className="text-center mb-16 max-w-3xl mx-auto">
                             <Reveal>
-                                <h2 className="text-4xl md:text-5xl font-serif text-[#1a1a1a] mb-6">
-                                    {lang === "en" ? "Destinations" : "Destinos"}
-                                </h2>
-                                <p className="text-[#5E5E5E] leading-relaxed">
-                                    {lang === "en"
-                                        ? "From the mystical cenotes of the Yucatán to the pristine beaches of Tulum, our properties are located in the most culturally rich and visually stunning regions of Mexico."
-                                        : "Desde los místicos cenotes de Yucatán hasta las playas vírgenes de Tulum, nuestras propiedades están ubicadas en las regiones más ricas culturalmente y visualmente impresionantes de México."}
-                                </p>
+                                <h2 className="text-4xl md:text-5xl font-serif text-[#1a1a1a] mb-6">{lifestyle.title}</h2>
+                                <p className="text-[#5E5E5E] leading-relaxed">{lifestyle.subtitle}</p>
                             </Reveal>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer">
-                                <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
-                                    <h3 className="text-white text-3xl font-serif">Yucatán</h3>
-                                    <p className="text-white/80 text-sm tracking-widest uppercase mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-500">
-                                        {lang === "en" ? "Ancient Culture & Cenotes" : "Cultura Antigua y Cenotes"}
-                                    </p>
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
-                                <motion.img
-                                    src={CENOTE_IMG}
-                                    alt="Cenote"
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* LOCATIONS */}
+                            <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.05}>
+                                <button
+                                    type="button"
+                                    onClick={() => setOverlay("locations")}
+                                    className="absolute inset-0 z-20"
+                                    aria-label="Open locations"
                                 />
-                            </Reveal>
-
-                            <Reveal delay={0.2} className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer">
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
-                                    <h3 className="text-white text-3xl font-serif">Tulum</h3>
+                                    <h3 className="text-white text-3xl font-serif">{lifestyle.cards.locations.title}</h3>
                                     <p className="text-white/80 text-sm tracking-widest uppercase mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-500">
-                                        {lang === "en" ? "Caribbean Coast & Nightlife" : "Costa Caribeña y Vida Nocturna"}
+                                        {lifestyle.cards.locations.subtitle}
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
                                 <motion.img
                                     src={BEACH_IMG}
-                                    alt="Tulum"
+                                    alt="Locations"
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                             </Reveal>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-                            <Reveal delay={0.3} className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer">
+                            {/* HOME CARE A-Z (replaces Gastronomy) */}
+                            <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.15}>
+                                <button
+                                    type="button"
+                                    onClick={() => setOverlay("homecare")}
+                                    className="absolute inset-0 z-20"
+                                    aria-label="Open home care"
+                                />
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
-                                    <h3 className="text-white text-3xl font-serif">Gastronomy</h3>
+                                    <h3 className="text-white text-3xl font-serif">{lifestyle.cards.homecare.title}</h3>
                                     <p className="text-white/80 text-sm tracking-widest uppercase mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-500">
-                                        {lang === "en" ? "World-Class Culinary Scene" : "Escena Culinaria de Clase Mundial"}
+                                        {lifestyle.cards.homecare.subtitle}
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
                                 <motion.img
                                     src={DINING_IMG}
-                                    alt="Dining"
+                                    alt="Home Care"
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                             </Reveal>
 
-                            <div className="bg-[#1a1a1a] text-white p-12 flex flex-col justify-center items-center text-center">
-                                <Reveal delay={0.4}>
-                                    <Globe className="w-12 h-12 text-[#B78454] mb-6 mx-auto" />
-                                    <h3 className="text-2xl font-serif mb-4">{lang === "en" ? "Global Access" : "Acceso Global"}</h3>
-                                    <p className="text-white/60 leading-relaxed mb-8">
-                                        {lang === "en"
-                                            ? "With international airports in Cancún, Mérida, and Tulum, your tropical sanctuary is just a flight away from major global hubs."
-                                            : "Con aeropuertos internacionales en Cancún, Mérida y Tulum, su santuario tropical está a solo un vuelo de los principales centros globales."}
+                            {/* GLOBAL ACCESS -> ABOUT OVERLAY */}
+                            <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.25}>
+                                <button
+                                    type="button"
+                                    onClick={() => setOverlay("about")}
+                                    className="absolute inset-0 z-20"
+                                    aria-label="Open about us"
+                                />
+                                <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
+                                    <h3 className="text-white text-3xl font-serif">{lifestyle.cards.global.title}</h3>
+                                    <p className="text-white/80 text-sm tracking-widest uppercase mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-500">
+                                        {lifestyle.cards.global.subtitle}
                                     </p>
-                                    <Button
-                                        variant="outline"
-                                        className="border-white/20 text-white hover:bg-white hover:text-black rounded-none uppercase tracking-widest text-xs py-6 px-8"
-                                    >
-                                        {lang === "en" ? "Learn More" : "Saber Más"}
-                                    </Button>
-                                </Reveal>
-                            </div>
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
+                                <motion.img
+                                    src={CENOTE_IMG}
+                                    alt="Global Access"
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+                            </Reveal>
                         </div>
                     </div>
                 </section>
 
-                {/* Contact Section (logo sizing applied) */}
+                {/* Contact */}
                 <section id="contact" className="relative py-24 bg-white">
                     <div className="absolute inset-0 opacity-40 mix-blend-multiply pointer-events-none">
                         <img src={TEXTURE_IMG} className="w-full h-full object-cover" alt="Texture" />
                     </div>
+
                     <div className="container mx-auto px-6 max-w-4xl relative z-10">
                         <div className="text-center mb-16">
                             <Reveal>
@@ -861,26 +935,23 @@ export default function HomeMexicoSite() {
                             <Card className="border-none shadow-2xl shadow-black/5 bg-white overflow-hidden">
                                 <div className="flex flex-col md:flex-row">
                                     <div className="w-full md:w-1/3 bg-[#1a1a1a] p-10 text-white flex flex-col justify-between">
-                                        <div>
-                                            <div className="text-2xl mb-6">
-                                            </div>
-                                            <div className="space-y-4 text-sm opacity-80 font-light">
-                                                <p className="flex items-center gap-3">
-                                                    <MapPin className="w-4 h-4 text-[#B78454]" />
-                                                    Paseo de Montejo 498
-                                                    <br />
-                                                    Mérida, Yuc. México
-                                                </p>
-                                                <p className="flex items-center gap-3">
-                                                    <Phone className="w-4 h-4 text-[#B78454]" />
-                                                    +52 (999) 123 4567
-                                                </p>
-                                                <p className="flex items-center gap-3">
-                                                    <Globe className="w-4 h-4 text-[#B78454]" />
-                                                    hello@lamaison.mx
-                                                </p>
-                                            </div>
+                                        <div className="space-y-4 text-sm opacity-80 font-light">
+                                            <p className="flex items-center gap-3">
+                                                <MapPin className="w-4 h-4 text-[#B78454]" />
+                                                Paseo de Montejo 498
+                                                <br />
+                                                Mérida, Yuc. México
+                                            </p>
+                                            <p className="flex items-center gap-3">
+                                                <Phone className="w-4 h-4 text-[#B78454]" />
+                                                +52 (999) 123 4567
+                                            </p>
+                                            <p className="flex items-center gap-3">
+                                                <Globe className="w-4 h-4 text-[#B78454]" />
+                                                hello@lamaison.mx
+                                            </p>
                                         </div>
+
                                         <div className="pt-12">
                                             <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center">
                                                 <Globe className="w-5 h-5 text-[#B78454]" />
@@ -889,7 +960,26 @@ export default function HomeMexicoSite() {
                                     </div>
 
                                     <div className="w-full md:w-2/3 p-10">
-                                        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                                        <form
+                                            className="space-y-6"
+                                            onSubmit={async (e) => {
+                                                e.preventDefault();
+                                                try {
+                                                    setSending(true);
+                                                    await sendInquiry({
+                                                        name: contactName.trim(),
+                                                        email: contactEmail.trim(),
+                                                        message: contactMsg.trim(),
+                                                    });
+                                                    setContactMsg("");
+                                                    alert(lang === "en" ? "Sent! We'll get back to you soon." : "¡Enviado! Te contactaremos pronto.");
+                                                } catch (err: any) {
+                                                    alert(err?.message || (lang === "en" ? "Failed to send. Please try again." : "No se pudo enviar. Intenta de nuevo."));
+                                                } finally {
+                                                    setSending(false);
+                                                }
+                                            }}
+                                        >
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
                                                     <Label htmlFor="name" className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -897,10 +987,13 @@ export default function HomeMexicoSite() {
                                                     </Label>
                                                     <Input
                                                         id="name"
+                                                        value={contactName}
+                                                        onChange={(e) => setContactName(e.target.value)}
                                                         className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-[#B78454] bg-transparent"
                                                         placeholder="John Doe"
                                                     />
                                                 </div>
+
                                                 <div className="space-y-2">
                                                     <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">
                                                         {copy[lang].contact.email}
@@ -908,11 +1001,14 @@ export default function HomeMexicoSite() {
                                                     <Input
                                                         id="email"
                                                         type="email"
+                                                        value={contactEmail}
+                                                        onChange={(e) => setContactEmail(e.target.value)}
                                                         className="border-0 border-b border-gray-200 rounded-none px-0 focus-visible:ring-0 focus-visible:border-[#B78454] bg-transparent"
                                                         placeholder="john@example.com"
                                                     />
                                                 </div>
                                             </div>
+
                                             <div className="space-y-2">
                                                 <Label htmlFor="message" className="text-xs uppercase tracking-widest text-muted-foreground">
                                                     {copy[lang].contact.message}
@@ -920,16 +1016,20 @@ export default function HomeMexicoSite() {
                                                 <textarea
                                                     id="message"
                                                     rows={4}
+                                                    value={contactMsg}
+                                                    onChange={(e) => setContactMsg(e.target.value)}
                                                     className="w-full border-0 border-b border-gray-200 rounded-none px-0 py-2 text-sm focus:outline-none focus:border-[#B78454] bg-transparent resize-none"
                                                     placeholder={lang === "en" ? "I'm interested in..." : "Me interesa..."}
                                                 />
                                             </div>
+
                                             <div className="pt-4 flex justify-end">
                                                 <Button
                                                     type="submit"
+                                                    disabled={sending}
                                                     className="bg-[#1a1a1a] text-white hover:bg-[#B78454] rounded-none px-8 py-6 text-xs tracking-widest transition-colors duration-500"
                                                 >
-                                                    {copy[lang].contact.send}
+                                                    {sending ? (lang === "en" ? "SENDING..." : "ENVIANDO...") : copy[lang].contact.send}
                                                 </Button>
                                             </div>
                                         </form>
@@ -940,7 +1040,7 @@ export default function HomeMexicoSite() {
                     </div>
                 </section>
 
-                {/* Footer (logo sizing applied) */}
+                {/* Footer */}
                 <footer className="bg-[#1a1a1a] text-white/40 py-12 px-6 border-t border-white/5">
                     <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                         <p className="text-xs tracking-widest">© 2025 LA MAISON MEXICO</p>
@@ -955,7 +1055,7 @@ export default function HomeMexicoSite() {
                     </div>
                 </footer>
 
-                {/* Modals */}
+                {/* Inquiry Modal */}
                 <AnimatePresence>
                     {inquiry && (
                         <motion.div
@@ -979,88 +1079,96 @@ export default function HomeMexicoSite() {
                                 <h3 className="font-serif text-2xl mb-2">{inquiry.title}</h3>
                                 <p className="text-muted-foreground text-sm mb-6 uppercase tracking-wide">{inquiry.location}</p>
 
-                                <div className="space-y-4">
-                                    <Input placeholder={copy[lang].contact.name} className="rounded-none border-gray-300" />
-                                    <Input placeholder={copy[lang].contact.email} className="rounded-none border-gray-300" />
+                                <form
+                                    className="space-y-4"
+                                    onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        try {
+                                            setSending(true);
+                                            await sendInquiry({
+                                                name: inqName.trim(),
+                                                email: inqEmail.trim(),
+                                                message: (inqMsg || "").trim(),
+                                                listingId: inquiry.id,
+                                            });
+                                            setInquiry(null);
+                                            setInqMsg("");
+                                            alert(lang === "en" ? "Sent! We'll get back to you soon." : "¡Enviado! Te contactaremos pronto.");
+                                        } catch (err: any) {
+                                            alert(err?.message || (lang === "en" ? "Failed to send. Please try again." : "No se pudo enviar. Intenta de nuevo."));
+                                        } finally {
+                                            setSending(false);
+                                        }
+                                    }}
+                                >
+                                    <Input value={inqName} onChange={(e) => setInqName(e.target.value)} placeholder={copy[lang].contact.name} className="rounded-none border-gray-300" />
+                                    <Input value={inqEmail} onChange={(e) => setInqEmail(e.target.value)} placeholder={copy[lang].contact.email} className="rounded-none border-gray-300" />
                                     <textarea
                                         className="w-full border border-gray-300 rounded-none p-3 text-sm focus:outline-none focus:border-[#B78454]"
                                         rows={4}
-                                        placeholder={`${copy[lang].contact.message} regarding ${inquiry.title}...`}
+                                        value={inqMsg}
+                                        onChange={(e) => setInqMsg(e.target.value)}
+                                        placeholder={lang === "en" ? `Message about ${inquiry.title}...` : `Mensaje sobre ${inquiry.title}...`}
                                     />
-                                    <Button className="w-full bg-[#1a1a1a] hover:bg-[#B78454] text-white rounded-none py-6 uppercase tracking-widest text-xs">
-                                        {copy[lang].contact.send}
+                                    <Button disabled={sending} className="w-full bg-[#1a1a1a] hover:bg-[#B78454] text-white rounded-none py-6 uppercase tracking-widest text-xs">
+                                        {sending ? (lang === "en" ? "SENDING..." : "ENVIANDO...") : copy[lang].contact.send}
                                     </Button>
-                                </div>
+                                </form>
                             </motion.div>
                         </motion.div>
                     )}
-
-                    {gallery && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center"
-                            onClick={() => setGallery(null)}
-                        >
-                            <button onClick={() => setGallery(null)} className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors z-50">
-                                <X className="w-8 h-8" />
-                            </button>
-
-                            <div className="w-full max-w-6xl px-6 h-[80vh] flex items-center justify-center relative">
-                                <motion.img
-                                    key={gallery.idx}
-                                    src={gallery.listing.photos[gallery.idx]}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.5, ease: "easeOut" }}
-                                    className="max-w-full max-h-full object-contain"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-
-                                <button
-                                    className="absolute left-4 md:left-0 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-4"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const newIdx = gallery.idx === 0 ? gallery.listing.photos.length - 1 : gallery.idx - 1;
-                                        setGallery({ ...gallery, idx: newIdx });
-                                    }}
-                                >
-                                    <ChevronLeft className="w-8 h-8" />
-                                </button>
-
-                                <button
-                                    className="absolute right-4 md:right-0 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-4"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const newIdx = (gallery.idx + 1) % gallery.listing.photos.length;
-                                        setGallery({ ...gallery, idx: newIdx });
-                                    }}
-                                >
-                                    <ChevronRight className="w-8 h-8" />
-                                </button>
-                            </div>
-
-                            <div className="absolute bottom-8 left-0 right-0 text-center">
-                                <h3 className="text-white text-xl font-serif mb-2">{gallery.listing.title}</h3>
-                                <p className="text-white/50 text-sm tracking-widest mb-6">
-                                    {gallery.idx + 1} / {gallery.listing.photos.length}
-                                </p>
-
-                                <Button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setInquiry(gallery.listing);
-                                        setGallery(null);
-                                    }}
-                                    className="bg-white text-black hover:bg-[#B78454] hover:text-white rounded-none px-8 py-6 text-xs tracking-widest transition-colors duration-500"
-                                >
-                                    {copy[lang].properties.inquire}
-                                </Button>
-                            </div>
-                        </motion.div>
-                    )}
                 </AnimatePresence>
+
+                {/* Full-page overlays */}
+                <FullPageOverlay
+                    open={overlay === "locations"}
+                    title={overlays.locations.title}
+                    onClose={() => setOverlay(null)}
+                >
+                    <p className="text-[#5E5E5E] leading-relaxed">{overlays.locations.body}</p>
+                    <div className="mt-8 border-t border-black/10 pt-6">
+                        <div className="text-[10px] tracking-[0.26em] uppercase text-[#5E5E5E]">{overlays.locations.listTitle}</div>
+                        <ul className="mt-4 space-y-2">
+                            {overlays.locations.list.map((x) => (
+                                <li key={x} className="border border-black/10 bg-white px-4 py-3">
+                                    {x}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </FullPageOverlay>
+
+                <FullPageOverlay
+                    open={overlay === "homecare"}
+                    title={overlays.homecare.title}
+                    onClose={() => setOverlay(null)}
+                >
+                    <p className="text-[#5E5E5E] leading-relaxed">{overlays.homecare.body}</p>
+                    <div className="mt-8 grid grid-cols-1 gap-4">
+                        {overlays.homecare.bullets.map((b) => (
+                            <div key={b.h} className="border border-black/10 bg-white p-5">
+                                <div className="text-xs tracking-[0.22em] uppercase text-[#B78454]">{b.h}</div>
+                                <p className="mt-3 text-[#5E5E5E] leading-relaxed">{b.t}</p>
+                            </div>
+                        ))}
+                    </div>
+                </FullPageOverlay>
+
+                <FullPageOverlay
+                    open={overlay === "about"}
+                    title={overlays.about.title}
+                    onClose={() => setOverlay(null)}
+                >
+                    <p className="text-[#5E5E5E] leading-relaxed">{overlays.about.body}</p>
+                    <div className="mt-8 grid grid-cols-1 gap-4">
+                        {overlays.about.bullets.map((b) => (
+                            <div key={b.h} className="border border-black/10 bg-white p-5">
+                                <div className="text-xs tracking-[0.22em] uppercase text-[#B78454]">{b.h}</div>
+                                <p className="mt-3 text-[#5E5E5E] leading-relaxed">{b.t}</p>
+                            </div>
+                        ))}
+                    </div>
+                </FullPageOverlay>
             </div>
         </>
     );
@@ -1076,21 +1184,21 @@ function PropertiesSection({
                                listings,
                                onOpen,
                                onInquire,
+                               onShare,
                            }: {
     id: string;
     lang: Lang;
     listings: Listing[];
     onOpen: (l: Listing) => void;
     onInquire: (l: Listing) => void;
+    onShare: (l: Listing) => void;
 }) {
     return (
         <section id={id} className="py-24 bg-white relative">
             <div className="container mx-auto px-6">
                 <Reveal>
-                    {/* Title centered on desktop, normal on mobile */}
                     <div className="mb-12 text-left md:text-center">
                         <h2 className="text-4xl md:text-5xl font-serif text-[#1a1a1a]">{copy[lang].properties.title}</h2>
-
                         <div className="mt-4 flex items-center gap-3 md:justify-center">
                             <div className="h-[1px] w-14 bg-[#B78454]/90" />
                             <div className="text-[10px] tracking-[0.28em] uppercase text-[#5E5E5E]">
@@ -1110,6 +1218,7 @@ function PropertiesSection({
                             lang={lang}
                             onOpen={() => onOpen(l)}
                             onInquire={() => onInquire(l)}
+                            onShare={() => onShare(l)}
                         />
                     ))}
                 </div>
@@ -1125,6 +1234,7 @@ function PropertyRow({
                          index,
                          onOpen,
                          onInquire,
+                         onShare,
                      }: {
     l: Listing;
     fallback: string;
@@ -1132,6 +1242,7 @@ function PropertyRow({
     index: number;
     onOpen: () => void;
     onInquire: () => void;
+    onShare: () => void;
 }) {
     return (
         <Reveal delay={index * 0.05}>
@@ -1158,7 +1269,13 @@ function PropertyRow({
                                 <div className="text-[10px] tracking-[0.26em] uppercase text-[#5E5E5E]">
                                     {l.type} • {l.id}
                                 </div>
-                                <div className="mt-2 font-serif text-2xl text-[#1a1a1a]">{l.title}</div>
+                                <button
+                                    type="button"
+                                    onClick={onOpen}
+                                    className="mt-2 font-serif text-2xl text-[#1a1a1a] hover:text-[#B78454] transition-colors text-left"
+                                >
+                                    {l.title}
+                                </button>
                                 <div className="mt-2 flex items-center gap-2 text-xs tracking-[0.14em] uppercase text-[#5E5E5E]">
                                     <MapPin className="w-3.5 h-3.5" />
                                     {l.location}
@@ -1187,6 +1304,16 @@ function PropertyRow({
                             </div>
 
                             <div className="flex items-center gap-4">
+                                <button
+                                    type="button"
+                                    onClick={onShare}
+                                    className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors flex items-center gap-2"
+                                    title={lang === "en" ? "Share listing" : "Compartir propiedad"}
+                                >
+                                    <Share2 className="w-3.5 h-3.5" />
+                                    {copy[lang].properties.share}
+                                </button>
+
                                 <button
                                     type="button"
                                     onClick={onOpen}

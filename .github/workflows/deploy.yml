@@ -1,49 +1,1 @@
-﻿name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-permissions:
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build
-        run: npm run build
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist/public
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+﻿  n a m e :   D e p l o y   t o   G i t H u b   P a g e s   o n :       p u s h :           b r a n c h e s :   [ m a i n ]       w o r k f l o w _ d i s p a t c h :     p e r m i s s i o n s :       p a g e s :   w r i t e       i d - t o k e n :   w r i t e     c o n c u r r e n c y :       g r o u p :   p a g e s       c a n c e l - i n - p r o g r e s s :   f a l s e     j o b s :       b u i l d :           r u n s - o n :   u b u n t u - l a t e s t           s t e p s :               -   n a m e :   C h e c k o u t                   u s e s :   a c t i o n s / c h e c k o u t @ v 4               -   n a m e :   S e t u p   N o d e                   u s e s :   a c t i o n s / s e t u p - n o d e @ v 4                   w i t h :                       n o d e - v e r s i o n :   ' 2 0 '                       c a c h e :   ' n p m '               -   n a m e :   I n s t a l l   d e p e n d e n c i e s                   r u n :   n p m   i n s t a l l               -   n a m e :   B u i l d                   r u n :   n p m   r u n   b u i l d               -   n a m e :   U p l o a d   a r t i f a c t                   u s e s :   a c t i o n s / u p l o a d - p a g e s - a r t i f a c t @ v 3                   w i t h :                       p a t h :   . / d i s t / p u b l i c         d e p l o y :           e n v i r o n m e n t :               n a m e :   g i t h u b - p a g e s           r u n s - o n :   u b u n t u - l a t e s t           n e e d s :   b u i l d           s t e p s :               -   n a m e :   D e p l o y   t o   G i t H u b   P a g e s                   i d :   d e p l o y m e n t               u r l :   $ { {   s t e p s . d e p l o y m e n t . o u t p u t s . p a g e _ u r l   } }   
