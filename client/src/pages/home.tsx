@@ -9,7 +9,6 @@ import {
 } from "framer-motion";
 import {
     Home as HomeIcon,
-    Search,
     Info,
     Utensils,
     Globe,
@@ -21,12 +20,14 @@ import {
     X,
     ArrowDown,
     Share2,
-    ShieldCheck,
+    SlidersHorizontal,
+    ChevronRight,
+    Sparkles,
+    CheckCircle2,
     Clock,
     Handshake,
+    ShieldCheck,
     Languages,
-    Star,
-    Filter,
 } from "lucide-react";
 import Lenis from "lenis";
 import { useLocation } from "wouter";
@@ -43,15 +44,9 @@ import TEXTURE_IMG from "@assets/generated_images/beige_plaster_texture.png";
 import INTERIOR_IMG from "@assets/generated_images/minimalist_hacienda_interior.png";
 import CENOTE_IMG from "@assets/generated_images/mystical_yucatan_cenote.png";
 import BEACH_IMG from "@assets/generated_images/luxury_beach_club_tulum.png";
-import DINING_IMG from "@assets/generated_images/mexican_fine_dining_detail.png";
 import TEXTILE_IMG from "@assets/generated_images/artisanal_mexican_textiles.png";
 
-import {
-    LISTINGS,
-    LISTING_IMAGES,
-    formatUSD,
-    type Listing,
-} from "@/data/listings";
+import { LISTINGS, LISTING_IMAGES, formatUSD, type Listing } from "@/data/listings";
 
 // ---------------- Images ----------------
 const HERO_PRIMARY = HERO_PRIMARY_IMG;
@@ -79,48 +74,37 @@ type Lang = "en" | "es";
 
 const copy = {
     en: {
-        nav: {
-            home: "HOME",
-            who: "WHY INVEST",
-            properties: "PROPERTIES",
-            lifestyle: "LIFESTYLE",
-            contact: "CONTACT",
-        },
+        nav: { home: "HOME", who: "WHY INVEST", properties: "PROPERTIES", lifestyle: "LIFESTYLE", contact: "CONTACT" },
         properties: {
             title: "PROPERTIES",
             inquire: "INQUIRE",
             share: "SHARE",
             curated: "Curated selection",
-            filtersLabel: "Filters",
-            filters: {
-                all: "All",
-                beach: "Beach",
-                city: "City",
-                family: "Family",
-                investment: "Investment",
-            },
-            featuredLabel: "FEATURED",
-            viewFeatured: "VIEW FEATURED",
-        },
-        contact: {
-            title: "CONTACT",
-            send: "SEND MESSAGE",
-            name: "Name",
-            email: "Email",
-            message: "Message",
-            success: "Sent! We'll get back to you soon.",
-            fail: "Failed to send. Please try again.",
+            openFilters: "FILTERS",
+            apply: "APPLY",
+            clear: "CLEAR",
+            results: "Results",
+            any: "Any",
+            priceMin: "Min price (USD)",
+            priceMax: "Max price (USD)",
+            bedsMin: "Beds (min)",
+            bathsMin: "Baths (min)",
+            areaMin: "Area m² (min)",
+            type: "Property type",
+            regions: "Locations",
+            noMatch: "No listings match these filters yet.",
         },
         toast: {
             copied: "Link copied",
             copiedDesc: "The listing link was copied to your clipboard.",
             invalid: "Please check your details",
-            invalidDesc: "Name, email, and message are required.",
+            invalidDesc: "Name, email, and message are required (valid email).",
             sending: "Sending…",
             sent: "Message sent",
             sentDesc: "We received your inquiry and will respond soon.",
             error: "Something went wrong",
         },
+        contact: { title: "CONTACT", send: "SEND MESSAGE", name: "Name", email: "Email", message: "Message" },
         why: {
             label: "WHY INVEST WITH US",
             headline: "Local execution. Global-level service.",
@@ -133,118 +117,80 @@ const copy = {
                 d: { h: "Bilingual support", t: "English/Spanish guidance when it matters." },
             },
         },
-        featured: {
-            title: "Featured Listing",
-            subtitle:
-                "A spotlight property—high quality, strong location, and designed to hold value.",
-            badge: "Curated highlight",
-        },
         lifestyle: {
             title: "Lifestyle",
             subtitle:
                 "Click to explore where we operate, how we take care of your home, and what we do for buyers and owners.",
             cards: {
                 locations: { title: "Locations", subtitle: "Where we operate" },
-                homecare: { title: "Home Care (A–Z)", subtitle: "We handle it end-to-end" },
-                global: { title: "Global Access", subtitle: "Who we are & what we do" },
+                homecare: { title: "Home care", subtitle: "We handle it end-to-end" },
+                about: { title: "About us", subtitle: "Who we are & what we do" },
             },
         },
         overlays: {
             locations: {
                 title: "Locations",
                 body:
-                    "We operate across key areas in the Riviera Maya and Yucatán, with local partners and on-the-ground execution.",
+                    "We operate across key areas in Mexico, with local partners and on-the-ground execution.",
                 listTitle: "Active areas",
-                list: ["Playa del Carmen", "Tulum", "Cancún", "Mérida", "Countryside"],
+                list: ["Riviera Maya", "Yucatán", "Mexico City", "Oaxaca", "Countryside"],
             },
             homecare: {
-                title: "Home Care (A–Z)",
+                title: "Home care",
                 body:
-                    "From the moment you buy to the way the home lives day-to-day—our team coordinates everything so ownership feels simple.",
+                    "From purchase to daily operations—our team coordinates everything so ownership feels effortless and consistent.",
                 bullets: [
-                    {
-                        h: "Design & Setup",
-                        t: "Layout direction, finishes, furnishing and staging—aligned with your home’s identity.",
-                    },
-                    {
-                        h: "Import & Logistics",
-                        t: "Sourcing, deliveries, customs coordination (when needed), and installation scheduling.",
-                    },
-                    {
-                        h: "Care While You’re Away",
-                        t: "Checks, cleaning, maintenance, small repairs, and trusted local coordination.",
-                    },
-                    {
-                        h: "Renting it Out",
-                        t: "Setup guidance and coordination—photos, turnover, and basic operational support.",
-                    },
+                    { h: "Design & Setup", t: "Furnishing direction, finishes, staging—aligned with your home’s identity." },
+                    { h: "Maintenance & Checks", t: "Routine inspections, preventive maintenance, fast fixes when needed." },
+                    { h: "Care While You’re Away", t: "Cleaning, utilities coordination, trusted local management." },
+                    { h: "Rent-ready Support", t: "Operational coordination, turnover workflows, standards & quality control." },
                 ],
             },
             about: {
-                title: "Who We Are",
+                title: "About us",
                 body:
                     "LA MAISON is a boutique property platform focused on Mexico. We curate strong homes and support buyers and owners with practical, local execution.",
                 bullets: [
-                    {
-                        h: "Curated properties",
-                        t: "Homes selected for quality, location, and long-term value.",
-                    },
-                    {
-                        h: "Local execution",
-                        t: "We coordinate viewings, paperwork touchpoints, and trusted on-the-ground partners.",
-                    },
-                    {
-                        h: "Owner support",
-                        t: "Design, setup, care, and light operations so ownership stays frictionless.",
-                    },
+                    { h: "Curated properties", t: "Homes selected for quality, location, and long-term value." },
+                    { h: "Local execution", t: "We coordinate viewings, paperwork touchpoints, and trusted partners." },
+                    { h: "Owner support", t: "Setup, care, and light operations so ownership stays frictionless." },
                 ],
             },
         },
     },
 
     es: {
-        nav: {
-            home: "INICIO",
-            who: "POR QUÉ INVERTIR",
-            properties: "PROPIEDADES",
-            lifestyle: "ESTILO DE VIDA",
-            contact: "CONTACTO",
-        },
+        nav: { home: "INICIO", who: "POR QUÉ INVERTIR", properties: "PROPIEDADES", lifestyle: "ESTILO DE VIDA", contact: "CONTACTO" },
         properties: {
             title: "PROPIEDADES",
             inquire: "CONSULTAR",
             share: "COMPARTIR",
             curated: "Selección curada",
-            filtersLabel: "Filtros",
-            filters: {
-                all: "Todas",
-                beach: "Playa",
-                city: "Ciudad",
-                family: "Familiar",
-                investment: "Inversión",
-            },
-            featuredLabel: "DESTACADO",
-            viewFeatured: "VER DESTACADO",
-        },
-        contact: {
-            title: "CONTACTO",
-            send: "ENVIAR MENSAJE",
-            name: "Nombre",
-            email: "Correo",
-            message: "Mensaje",
-            success: "¡Enviado! Te contactaremos pronto.",
-            fail: "No se pudo enviar. Intenta de nuevo.",
+            openFilters: "FILTROS",
+            apply: "APLICAR",
+            clear: "LIMPIAR",
+            results: "Resultados",
+            any: "Cualquiera",
+            priceMin: "Precio mín (USD)",
+            priceMax: "Precio máx (USD)",
+            bedsMin: "Recámaras (mín)",
+            bathsMin: "Baños (mín)",
+            areaMin: "Área m² (mín)",
+            type: "Tipo de propiedad",
+            regions: "Ubicaciones",
+            noMatch: "No hay propiedades para estos filtros.",
         },
         toast: {
             copied: "Enlace copiado",
             copiedDesc: "El enlace se copió al portapapeles.",
             invalid: "Revisa tus datos",
-            invalidDesc: "Nombre, correo y mensaje son obligatorios.",
+            invalidDesc: "Nombre, correo y mensaje son obligatorios (correo válido).",
             sending: "Enviando…",
             sent: "Mensaje enviado",
             sentDesc: "Recibimos tu consulta y responderemos pronto.",
             error: "Ocurrió un error",
         },
+        contact: { title: "CONTACTO", send: "ENVIAR MENSAJE", name: "Nombre", email: "Correo", message: "Mensaje" },
         why: {
             label: "POR QUÉ INVERTIR CON NOSOTROS",
             headline: "Ejecución local. Servicio de nivel global.",
@@ -257,73 +203,43 @@ const copy = {
                 d: { h: "Soporte bilingüe", t: "Guía en inglés/español cuando importa." },
             },
         },
-        featured: {
-            title: "Propiedad Destacada",
-            subtitle:
-                "Una propiedad en foco—alta calidad, buena ubicación y pensada para mantener valor.",
-            badge: "Selección curada",
-        },
         lifestyle: {
             title: "Estilo de Vida",
             subtitle:
                 "Haz clic para ver dónde operamos, cómo cuidamos tu casa y qué hacemos para compradores y propietarios.",
             cards: {
                 locations: { title: "Ubicaciones", subtitle: "Dónde operamos" },
-                homecare: {
-                    title: "Cuidado del Hogar (A–Z)",
-                    subtitle: "Lo gestionamos de principio a fin",
-                },
-                global: { title: "Acceso Global", subtitle: "Quiénes somos y qué hacemos" },
+                homecare: { title: "Cuidado del hogar", subtitle: "Lo gestionamos de principio a fin" },
+                about: { title: "Sobre nosotros", subtitle: "Quiénes somos y qué hacemos" },
             },
         },
         overlays: {
             locations: {
                 title: "Ubicaciones",
                 body:
-                    "Operamos en zonas clave de la Riviera Maya y Yucatán, con aliados locales y ejecución en el terreno.",
+                    "Operamos en zonas clave de México, con aliados locales y ejecución en el terreno.",
                 listTitle: "Zonas activas",
-                list: ["Playa del Carmen", "Tulum", "Cancún", "Mérida", "Zona rural"],
+                list: ["Riviera Maya", "Yucatán", "Ciudad de México", "Oaxaca", "Zona rural"],
             },
             homecare: {
-                title: "Cuidado del Hogar (A–Z)",
+                title: "Cuidado del hogar",
                 body:
-                    "Desde la compra hasta la operación del día a día—coordinamos todo para que ser propietario sea simple.",
+                    "Desde la compra hasta la operación del día a día—coordinamos todo para que ser propietario sea simple y consistente.",
                 bullets: [
-                    {
-                        h: "Diseño y Preparación",
-                        t: "Distribución, acabados, mobiliario y ambientación alineados con la identidad de tu hogar.",
-                    },
-                    {
-                        h: "Importación y Logística",
-                        t: "Compras, entregas, aduana (si aplica) y coordinación de instalación.",
-                    },
-                    {
-                        h: "Cuidado Cuando No Estás",
-                        t: "Revisiones, limpieza, mantenimiento, reparaciones menores y coordinación local.",
-                    },
-                    {
-                        h: "Renta",
-                        t: "Guía y coordinación—fotos, rotación y soporte operativo básico.",
-                    },
+                    { h: "Diseño y Preparación", t: "Mobiliario, acabados y ambientación alineados a la identidad de tu hogar." },
+                    { h: "Mantenimiento y Revisiones", t: "Inspecciones, mantenimiento preventivo y reparaciones rápidas." },
+                    { h: "Cuidado Cuando No Estás", t: "Limpieza, coordinación de servicios y gestión local confiable." },
+                    { h: "Soporte para Renta", t: "Operación, rotación, estándares y control de calidad." },
                 ],
             },
             about: {
-                title: "Quiénes Somos",
+                title: "Sobre nosotros",
                 body:
                     "LA MAISON es una plataforma boutique enfocada en México. Curamos propiedades sólidas y apoyamos a compradores y propietarios con ejecución práctica y local.",
                 bullets: [
-                    {
-                        h: "Propiedades curadas",
-                        t: "Casas seleccionadas por calidad, ubicación y valor a largo plazo.",
-                    },
-                    {
-                        h: "Ejecución local",
-                        t: "Coordinamos visitas, puntos clave del papeleo y aliados confiables.",
-                    },
-                    {
-                        h: "Soporte al propietario",
-                        t: "Diseño, preparación, cuidado y operación ligera para minimizar fricción.",
-                    },
+                    { h: "Propiedades curadas", t: "Casas seleccionadas por calidad, ubicación y valor a largo plazo." },
+                    { h: "Ejecución local", t: "Coordinamos visitas, puntos del papeleo y aliados confiables." },
+                    { h: "Soporte al propietario", t: "Preparación, cuidado y operación ligera para minimizar fricción." },
                 ],
             },
         },
@@ -343,6 +259,11 @@ function usePointer() {
 
 function isValidEmail(email: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function toNum(v: string): number | null {
+    const n = Number(String(v).replace(/,/g, "").trim());
+    return Number.isFinite(n) ? n : null;
 }
 
 // ---------------- Preloader ----------------
@@ -371,24 +292,16 @@ function Preloader({ onComplete }: { onComplete: () => void }) {
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         className="flex flex-col items-center gap-4"
                     >
-                        <div className="font-serif tracking-[0.2em] text-3xl md:text-5xl">
-                            LA MAISON
-                        </div>
+                        <div className="font-serif tracking-[0.2em] text-3xl md:text-5xl">LA MAISON</div>
                         <div className="h-[1px] w-28 bg-[#B78454]/50 overflow-hidden relative">
                             <motion.div
                                 className="absolute inset-0 bg-[#B78454]"
                                 initial={{ x: "-100%" }}
                                 animate={{ x: "100%" }}
-                                transition={{
-                                    duration: 1.4,
-                                    repeat: Infinity,
-                                    ease: "easeInOut",
-                                }}
+                                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                             />
                         </div>
-                        <p className="text-[10px] tracking-[0.3em] uppercase opacity-50">
-                            Mexico
-                        </p>
+                        <p className="text-[10px] tracking-[0.3em] uppercase opacity-50">Mexico</p>
                     </motion.div>
                 </motion.div>
             )}
@@ -406,10 +319,7 @@ function CustomCursor() {
     const opacity = 0.55;
 
     return (
-        <motion.div
-            className="pointer-events-none fixed left-0 top-0 z-[9999] hidden lg:block mix-blend-difference"
-            style={{ x, y }}
-        >
+        <motion.div className="pointer-events-none fixed left-0 top-0 z-[9999] hidden lg:block mix-blend-difference" style={{ x, y }}>
             <motion.div
                 className="rounded-full bg-white"
                 animate={{
@@ -497,18 +407,12 @@ function ClipRevealImage({
     className?: string;
 }) {
     const ref = useRef<HTMLDivElement | null>(null);
-    const { scrollYProgress } = useScroll({
-        target: ref,
-        offset: ["start 85%", "end 55%"],
-    });
+    const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 55%"] });
 
     const clip = useTransform(
         scrollYProgress,
         [0, 1],
-        [
-            "polygon(0 0, 0 0, 0 100%, 0 100%)",
-            "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
-        ]
+        ["polygon(0 0, 0 0, 0 100%, 0 100%)", "polygon(0 0, 100% 0, 100% 100%, 0 100%)"]
     );
     const scale = useSpring(useTransform(scrollYProgress, [0, 1], [1.1, 1.0]), {
         stiffness: 120,
@@ -516,17 +420,8 @@ function ClipRevealImage({
     });
 
     return (
-        <motion.div
-            ref={ref}
-            className={cn("relative overflow-hidden bg-muted", className)}
-            style={{ clipPath: clip }}
-        >
-            <motion.img
-                {...safeImage(src, fallback)}
-                alt={alt}
-                className="h-full w-full object-cover"
-                style={{ scale }}
-            />
+        <motion.div ref={ref} className={cn("relative overflow-hidden bg-muted", className)} style={{ clipPath: clip }}>
+            <motion.img {...safeImage(src, fallback)} alt={alt} className="h-full w-full object-cover" style={{ scale }} />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/35" />
         </motion.div>
     );
@@ -538,12 +433,7 @@ function NoiseOverlay() {
         <div className="fixed inset-0 z-[1] pointer-events-none opacity-[0.03] mix-blend-overlay">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
                 <filter id="noise">
-                    <feTurbulence
-                        type="fractalNoise"
-                        baseFrequency="0.65"
-                        numOctaves="3"
-                        stitchTiles="stitch"
-                    />
+                    <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
                 </filter>
                 <rect width="100%" height="100%" filter="url(#noise)" />
             </svg>
@@ -632,12 +522,7 @@ function ParticleField() {
         };
     }, [pointer.x, pointer.y]);
 
-    return (
-        <canvas
-            ref={canvasRef}
-            className="pointer-events-none fixed inset-0 z-0 opacity-35 mix-blend-screen"
-        />
-    );
+    return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0 opacity-35 mix-blend-screen" />;
 }
 
 // ---------------- Scroll progress indicator ----------------
@@ -646,10 +531,7 @@ function ScrollProgress() {
     const sx = useSpring(scrollYProgress, { stiffness: 120, damping: 22 });
     return (
         <motion.div className="fixed left-0 top-0 z-[9998] h-[3px] w-full bg-black/5">
-            <motion.div
-                className="h-full bg-primary"
-                style={{ scaleX: sx, transformOrigin: "0% 50%" }}
-            />
+            <motion.div className="h-full bg-primary" style={{ scaleX: sx, transformOrigin: "0% 50%" }} />
         </motion.div>
     );
 }
@@ -688,19 +570,10 @@ function WhatsAppFixedButton() {
 
 /**
  * Email sending WITHOUT SMTP env vars:
- * Uses FormSubmit's AJAX endpoint so the site can submit forms without leaving the page. :contentReference[oaicite:1]{index=1}
- *
- * IMPORTANT:
- * - First time, FormSubmit may ask you to confirm the email (check inbox of lamaisonmexico@gmail.com).
- * - If you ever stop receiving emails, open FormSubmit settings for that email and verify it's active.
+ * Uses FormSubmit AJAX endpoint.
+ * Note: first time may require confirming the email with FormSubmit.
  */
-async function sendInquiry(payload: {
-    name: string;
-    email: string;
-    message: string;
-    listingId?: string;
-    listingTitle?: string;
-}) {
+async function sendInquiry(payload: { name: string; email: string; message: string; listingId?: string; listingTitle?: string }) {
     const endpoint = "https://formsubmit.co/ajax/lamaisonmexico@gmail.com";
 
     const form = new FormData();
@@ -710,8 +583,6 @@ async function sendInquiry(payload: {
     if (payload.listingId) form.append("listingId", payload.listingId);
     if (payload.listingTitle) form.append("listingTitle", payload.listingTitle);
     form.append("page", typeof window !== "undefined" ? window.location.href : "");
-
-    // FormSubmit options (safe defaults)
     form.append("_subject", payload.listingId ? `New inquiry: ${payload.listingId}` : "New inquiry: LA MAISON");
     form.append("_captcha", "false");
 
@@ -721,7 +592,6 @@ async function sendInquiry(payload: {
         body: form,
     });
 
-    // If CORS is restricted, res.ok might be false even if delivered. We still try to parse JSON.
     if (!res.ok) {
         const text = await res.text().catch(() => "");
         throw new Error(text || "Failed to send inquiry");
@@ -751,19 +621,11 @@ async function shareListing(listing: Listing) {
     }
 }
 
-type OverlayKey = "locations" | "homecare" | "about";
-
 // ---------------- Toasts (no external libs) ----------------
 type ToastVariant = "success" | "error" | "info";
 type ToastItem = { id: string; title: string; description?: string; variant: ToastVariant };
 
-function ToastViewport({
-                           toasts,
-                           onDismiss,
-                       }: {
-    toasts: ToastItem[];
-    onDismiss: (id: string) => void;
-}) {
+function ToastViewport({ toasts, onDismiss }: { toasts: ToastItem[]; onDismiss: (id: string) => void }) {
     return (
         <div className="fixed right-4 top-4 z-[99999] flex w-[92vw] max-w-sm flex-col gap-3">
             <AnimatePresence>
@@ -782,14 +644,8 @@ function ToastViewport({
                     >
                         <div className="flex items-start justify-between gap-3">
                             <div>
-                                <div className="text-[11px] tracking-[0.22em] uppercase text-[#1a1a1a]">
-                                    {t.title}
-                                </div>
-                                {t.description && (
-                                    <div className="mt-1 text-sm text-[#5E5E5E] leading-snug">
-                                        {t.description}
-                                    </div>
-                                )}
+                                <div className="text-[11px] tracking-[0.22em] uppercase text-[#1a1a1a]">{t.title}</div>
+                                {t.description && <div className="mt-1 text-sm text-[#5E5E5E] leading-snug">{t.description}</div>}
                             </div>
                             <button
                                 className="text-black/40 hover:text-black/70 transition-colors"
@@ -806,50 +662,134 @@ function ToastViewport({
     );
 }
 
-// ---------------- Full page overlay ----------------
-function FullPageOverlay({
-                             open,
-                             title,
-                             children,
-                             onClose,
-                         }: {
+// ---------------- Cinematic overlay ----------------
+type OverlayKey = "locations" | "homecare" | "about";
+
+function CinematicOverlay({
+                              open,
+                              title,
+                              subtitle,
+                              heroImage,
+                              onClose,
+                              children,
+                          }: {
     open: boolean;
     title: string;
-    children: React.ReactNode;
+    subtitle: string;
+    heroImage: string;
     onClose: () => void;
+    children: React.ReactNode;
 }) {
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open, onClose]);
+
     return (
         <AnimatePresence>
             {open && (
                 <motion.div
-                    className="fixed inset-0 z-[80] bg-black/85 backdrop-blur-sm"
+                    className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-md"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
                 >
                     <motion.div
+                        onClick={(e) => e.stopPropagation()}
                         className="absolute inset-0 overflow-auto"
                         initial={{ y: 18, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 18, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                        onClick={(e) => e.stopPropagation()}
+                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <div className="min-h-screen px-6 py-10">
-                            <div className="max-w-4xl mx-auto bg-[#F5F1EA] text-[#1a1a1a] border border-black/10 shadow-2xl">
-                                <div className="flex items-center justify-between px-6 py-5 border-b border-black/10">
-                                    <div className="font-serif text-2xl">{title}</div>
-                                    <button
-                                        onClick={onClose}
-                                        className="text-black/60 hover:text-black transition-colors"
-                                    >
-                                        <X className="w-6 h-6" />
+                        <div className="relative h-[46vh] min-h-[340px]">
+                            <motion.img
+                                {...safeImage(heroImage, HERO_FALLBACK)}
+                                alt={title}
+                                className="absolute inset-0 h-full w-full object-cover"
+                                initial={{ scale: 1.12 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/90" />
+
+                            <div className="relative h-full px-6 py-8 flex flex-col justify-between">
+                                <div className="max-w-6xl mx-auto w-full flex items-start justify-between gap-6">
+                                    <div>
+                                        <div className="text-[10px] tracking-[0.32em] uppercase text-white/70 flex items-center gap-2">
+                                            <Sparkles className="h-3.5 w-3.5 text-[#B78454]" />
+                                            LA MAISON
+                                        </div>
+                                        <div className="mt-3 font-serif text-3xl md:text-5xl text-white">{title}</div>
+                                        <div className="mt-4 max-w-2xl text-white/70 leading-relaxed">{subtitle}</div>
+                                    </div>
+
+                                    <button onClick={onClose} className="shrink-0 text-white/70 hover:text-white transition-colors" aria-label="Close overlay">
+                                        <X className="h-7 w-7" />
                                     </button>
                                 </div>
-                                <div className="px-6 py-8">{children}</div>
+
+                                <div className="max-w-6xl mx-auto w-full">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="border border-white/10 bg-white/5 px-5 py-4">
+                                            <div className="text-[10px] tracking-[0.26em] uppercase text-white/60">Standard</div>
+                                            <div className="mt-2 text-white text-sm">Premium coordination</div>
+                                        </div>
+                                        <div className="border border-white/10 bg-white/5 px-5 py-4">
+                                            <div className="text-[10px] tracking-[0.26em] uppercase text-white/60">Speed</div>
+                                            <div className="mt-2 text-white text-sm">Frictionless execution</div>
+                                        </div>
+                                        <div className="border border-white/10 bg-white/5 px-5 py-4">
+                                            <div className="text-[10px] tracking-[0.26em] uppercase text-white/60">Care</div>
+                                            <div className="mt-2 text-white text-sm">High-touch support</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        <div className="bg-[#F5F1EA] text-[#1a1a1a]">
+                            <div className="max-w-6xl mx-auto px-6 py-12">{children}</div>
+
+                            <div className="border-t border-black/10">
+                                <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                                    <div>
+                                        <div className="text-[10px] tracking-[0.28em] uppercase text-[#B78454]">Next step</div>
+                                        <div className="mt-2 font-serif text-2xl">Talk to us — fast, direct, no friction.</div>
+                                        <div className="mt-2 text-[#5E5E5E]">We respond quickly and keep it simple.</div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <a
+                                            href="https://wa.me/34667640713"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="border border-black/10 bg-[#1a1a1a] text-white px-6 py-4 text-[10px] tracking-[0.26em] uppercase hover:bg-[#B78454] transition-colors"
+                                        >
+                                            WHATSAPP
+                                        </a>
+                                        <a
+                                            href="mailto:lamaisonmexico@gmail.com"
+                                            className="border border-black/10 bg-white px-6 py-4 text-[10px] tracking-[0.26em] uppercase hover:border-[#B78454]/50 transition-colors"
+                                        >
+                                            EMAIL
+                                        </a>
+                                        <button
+                                            onClick={onClose}
+                                            className="border border-black/10 bg-white px-6 py-4 text-[10px] tracking-[0.26em] uppercase hover:border-[#B78454]/50 transition-colors"
+                                        >
+                                            CLOSE
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </motion.div>
                 </motion.div>
             )}
@@ -870,7 +810,7 @@ export default function HomeMexicoSite() {
     const [inquiry, setInquiry] = useState<Listing | null>(null);
     const [sending, setSending] = useState(false);
 
-    // Full-page overlays
+    // Cinematic overlays
     const [overlay, setOverlay] = useState<OverlayKey | null>(null);
 
     // Contact form state
@@ -890,8 +830,7 @@ export default function HomeMexicoSite() {
         setToasts((prev) => [{ id, ...t }, ...prev].slice(0, 4));
         setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== id)), 3600);
     };
-    const dismissToast = (id: string) =>
-        setToasts((prev) => prev.filter((x) => x.id !== id));
+    const dismissToast = (id: string) => setToasts((prev) => prev.filter((x) => x.id !== id));
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 50);
@@ -938,7 +877,7 @@ export default function HomeMexicoSite() {
         () => [
             { id: "home", label: copy[lang].nav.home, icon: <HomeIcon className="h-4 w-4" /> },
             { id: "who", label: copy[lang].nav.who, icon: <Info className="h-4 w-4" /> },
-            { id: "properties", label: copy[lang].nav.properties, icon: <Search className="h-4 w-4" /> },
+            { id: "properties", label: copy[lang].nav.properties, icon: <Info className="h-4 w-4" /> },
             { id: "lifestyle", label: copy[lang].nav.lifestyle, icon: <Utensils className="h-4 w-4" /> },
             { id: "contact", label: copy[lang].nav.contact, icon: <Phone className="h-4 w-4" /> },
         ],
@@ -956,11 +895,210 @@ export default function HomeMexicoSite() {
     const lifestyle = copy[lang].lifestyle;
     const overlays = copy[lang].overlays;
 
-    // Featured listing (simple: highest price as "flagship")
-    const featured = useMemo(() => {
-        const sorted = [...LISTINGS].sort((a, b) => b.priceUSD - a.priceUSD);
-        return sorted[0] ?? LISTINGS[0];
-    }, []);
+    const overlayConfig = useMemo(() => {
+        if (!overlay) return null;
+
+        if (overlay === "locations") {
+            return {
+                title: overlays.locations.title,
+                subtitle: overlays.locations.body,
+                hero: BEACH_IMG,
+                content: (
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10">
+                        <div>
+                            <div className="text-[10px] tracking-[0.28em] uppercase text-[#B78454]">Focus</div>
+                            <h3 className="mt-3 font-serif text-3xl">Where we operate</h3>
+                            <p className="mt-4 text-[#5E5E5E] leading-relaxed">
+                                We focus on select areas where we can execute with real reliability: viewings, coordination, support, and local partners.
+                            </p>
+
+                            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {[
+                                    { h: "Riviera Maya", t: "Lifestyle markets with strong demand." },
+                                    { h: "Yucatán", t: "City + countryside value & culture." },
+                                    { h: "Mexico City", t: "Stable city anchor opportunities." },
+                                    { h: "Local network", t: "Trusted vendors + partners." },
+                                ].map((x) => (
+                                    <div key={x.h} className="border border-black/10 bg-white p-5">
+                                        <div className="flex items-center gap-2 text-xs tracking-[0.22em] uppercase text-[#1a1a1a]">
+                                            <CheckCircle2 className="h-4 w-4 text-[#B78454]" />
+                                            {x.h}
+                                        </div>
+                                        <p className="mt-3 text-[#5E5E5E] leading-relaxed">{x.t}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="border border-black/10 bg-white p-6">
+                            <div className="text-[10px] tracking-[0.28em] uppercase text-[#5E5E5E]">{overlays.locations.listTitle}</div>
+                            <div className="mt-4 space-y-2">
+                                {overlays.locations.list.map((x) => (
+                                    <div key={x} className="flex items-center justify-between border border-black/10 bg-[#F5F1EA] px-4 py-3">
+                                        <div className="font-serif text-lg">{x}</div>
+                                        <ChevronRight className="h-4 w-4 text-black/40" />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 border-t border-black/10 pt-5">
+                                <div className="text-xs tracking-[0.22em] uppercase text-[#B78454]">Tip</div>
+                                <p className="mt-2 text-[#5E5E5E] leading-relaxed">
+                                    Tell us your budget and target lifestyle. We’ll recommend the best-fit areas fast.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ),
+            };
+        }
+
+        if (overlay === "homecare") {
+            return {
+                title: overlays.homecare.title,
+                subtitle: overlays.homecare.body,
+                hero: INTERIOR_IMG,
+                content: (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div>
+                            <div className="text-[10px] tracking-[0.28em] uppercase text-[#B78454]">Home care</div>
+                            <h3 className="mt-3 font-serif text-3xl">A–Z ownership support</h3>
+                            <p className="mt-4 text-[#5E5E5E] leading-relaxed">
+                                We build a simple, premium standard for your home—so it feels consistent whether you’re here or away.
+                            </p>
+
+                            <div className="mt-8 space-y-4">
+                                {overlays.homecare.bullets.map((b) => (
+                                    <div key={b.h} className="border border-black/10 bg-white p-5">
+                                        <div className="text-xs tracking-[0.22em] uppercase text-[#B78454] flex items-center gap-2">
+                                            <Sparkles className="h-4 w-4" />
+                                            {b.h}
+                                        </div>
+                                        <p className="mt-3 text-[#5E5E5E] leading-relaxed">{b.t}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="border border-black/10 bg-white overflow-hidden">
+                            <div className="relative h-[260px]">
+                                <img {...safeImage(TEXTURE_IMG, HERO_FALLBACK)} alt="Texture" className="absolute inset-0 h-full w-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-black/0" />
+                                <div className="absolute bottom-5 left-6 right-6 text-white">
+                                    <div className="text-[10px] tracking-[0.28em] uppercase text-white/70">Standard</div>
+                                    <div className="mt-2 font-serif text-2xl">Consistency, always</div>
+                                </div>
+                            </div>
+
+                            <div className="p-6">
+                                <div className="text-[10px] tracking-[0.28em] uppercase text-[#5E5E5E]">What you get</div>
+                                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {[
+                                        "Weekly / monthly checks",
+                                        "Maintenance coordination",
+                                        "Cleaning standards",
+                                        "Vendor management",
+                                        "Utility coordination",
+                                        "Fast issue response",
+                                    ].map((x) => (
+                                        <div key={x} className="border border-black/10 bg-[#F5F1EA] px-4 py-3 text-sm text-[#1a1a1a] flex items-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4 text-[#B78454]" />
+                                            {x}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-6 border-t border-black/10 pt-5">
+                                    <div className="text-xs tracking-[0.22em] uppercase text-[#B78454]">Note</div>
+                                    <p className="mt-2 text-[#5E5E5E] leading-relaxed">
+                                        We keep the experience premium and simple—no chaos, no guessing, no friction.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ),
+            };
+        }
+
+        return {
+            title: overlays.about.title,
+            subtitle: overlays.about.body,
+            hero: CENOTE_IMG,
+            content: (
+                <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-10 items-start">
+                    <div className="border border-black/10 bg-white overflow-hidden">
+                        <div className="relative h-[320px]">
+                            <img {...safeImage(HERO_PRIMARY, HERO_FALLBACK)} alt="LA MAISON" className="absolute inset-0 h-full w-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/0" />
+                            <div className="absolute bottom-5 left-6 right-6 text-white">
+                                <div className="text-[10px] tracking-[0.28em] uppercase text-white/70">LA MAISON</div>
+                                <div className="mt-2 font-serif text-2xl">Boutique. Curated. Practical.</div>
+                            </div>
+                        </div>
+
+                        <div className="p-6">
+                            <div className="text-[10px] tracking-[0.28em] uppercase text-[#5E5E5E]">Principles</div>
+                            <div className="mt-4 space-y-2">
+                                {[
+                                    "Quality over quantity",
+                                    "Local execution first",
+                                    "Simple, direct process",
+                                    "High-touch communication",
+                                ].map((x) => (
+                                    <div key={x} className="border border-black/10 bg-[#F5F1EA] px-4 py-3 text-sm text-[#1a1a1a] flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 text-[#B78454]" />
+                                        {x}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="text-[10px] tracking-[0.28em] uppercase text-[#B78454]">Who we are</div>
+                        <h3 className="mt-3 font-serif text-3xl">Luxury feel, real-world execution</h3>
+                        <p className="mt-4 text-[#5E5E5E] leading-relaxed">
+                            We focus on what matters: good homes, clean coordination, and an ownership experience that stays calm.
+                        </p>
+
+                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {overlays.about.bullets.map((b) => (
+                                <div key={b.h} className="border border-black/10 bg-white p-5">
+                                    <div className="text-xs tracking-[0.22em] uppercase text-[#B78454] flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        {b.h}
+                                    </div>
+                                    <p className="mt-3 text-[#5E5E5E] leading-relaxed">{b.t}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-8 border border-black/10 bg-white p-6">
+                            <div className="text-[10px] tracking-[0.28em] uppercase text-[#5E5E5E]">How we work</div>
+                            <div className="mt-4 space-y-3">
+                                {[
+                                    { h: "1) Understand your target", t: "Lifestyle + budget + timeline." },
+                                    { h: "2) Curate options", t: "Only properties that fit your intent." },
+                                    { h: "3) Execute locally", t: "Viewings, partners, coordination." },
+                                    { h: "4) Support ownership", t: "Setup + care + operations." },
+                                ].map((x) => (
+                                    <div key={x.h} className="flex items-start gap-3">
+                                        <div className="mt-1 h-2 w-2 rounded-full bg-[#B78454]" />
+                                        <div>
+                                            <div className="font-medium text-[#1a1a1a]">{x.h}</div>
+                                            <div className="text-[#5E5E5E]">{x.t}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            ),
+        };
+    }, [overlay, overlays]);
 
     return (
         <>
@@ -1082,7 +1220,7 @@ export default function HomeMexicoSite() {
                         )}
                     </div>
 
-                    {/* Scroll now jumps to PROPERTIES */}
+                    {/* Scroll -> PROPERTIES */}
                     <motion.div
                         className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 flex flex-col items-center gap-2 cursor-pointer"
                         animate={{ y: [0, 10, 0] }}
@@ -1093,134 +1231,6 @@ export default function HomeMexicoSite() {
                         <ArrowDown className="w-4 h-4 opacity-70" />
                     </motion.div>
                 </section>
-
-                {/* FEATURED LISTING TEASER */}
-                {featured && (
-                    <section className="relative py-20 bg-[#F5F1EA]">
-                        <div className="container mx-auto px-6">
-                            <Reveal>
-                                <div className="flex items-center justify-between gap-6 flex-wrap">
-                                    <div>
-                                        <div className="text-[10px] tracking-[0.26em] uppercase text-[#B78454] flex items-center gap-2">
-                                            <Star className="h-3.5 w-3.5" />
-                                            {copy[lang].properties.featuredLabel}
-                                            <span className="opacity-50">•</span>
-                                            {copy[lang].featured.badge}
-                                        </div>
-                                        <h2 className="mt-3 text-3xl md:text-4xl font-serif text-[#1a1a1a]">
-                                            {copy[lang].featured.title}
-                                        </h2>
-                                        <p className="mt-3 text-[#5E5E5E] max-w-2xl leading-relaxed">
-                                            {copy[lang].featured.subtitle}
-                                        </p>
-                                    </div>
-
-                                    <Button
-                                        onClick={() => setLocation(`/properties/${featured.id}`)}
-                                        className="bg-[#1a1a1a] text-white hover:bg-[#B78454] rounded-none px-8 py-6 text-xs tracking-widest transition-colors duration-500"
-                                    >
-                                        {copy[lang].properties.viewFeatured}
-                                    </Button>
-                                </div>
-                            </Reveal>
-
-                            <Reveal delay={0.15} className="mt-10">
-                                <div className="border border-black/10 bg-white overflow-hidden">
-                                    <div className="grid grid-cols-1 md:grid-cols-[360px_1fr]">
-                                        <div className="relative h-[220px] md:h-full overflow-hidden">
-                                            <img
-                                                {...safeImage(
-                                                    featured.image,
-                                                    LISTING_IMAGES[(Number(featured.id.split("-")[1]) + 1) % LISTING_IMAGES.length]
-                                                )}
-                                                alt={featured.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/0 to-transparent" />
-                                        </div>
-
-                                        <div className="p-7">
-                                            <div className="flex items-start justify-between gap-8">
-                                                <div>
-                                                    <div className="text-[10px] tracking-[0.26em] uppercase text-[#5E5E5E]">
-                                                        {featured.type} • {featured.id}
-                                                    </div>
-                                                    <div className="mt-2 font-serif text-2xl text-[#1a1a1a]">{featured.title}</div>
-                                                    <div className="mt-2 flex items-center gap-2 text-xs tracking-[0.14em] uppercase text-[#5E5E5E]">
-                                                        <MapPin className="w-3.5 h-3.5" />
-                                                        {featured.location}
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="font-medium text-[#1a1a1a]">{formatUSD(featured.priceUSD)}</div>
-                                                    <div className="mt-2 h-[1px] w-14 bg-[#B78454]/70 ml-auto" />
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-4 text-sm text-[#5E5E5E] leading-relaxed line-clamp-2">
-                                                {featured.description[lang]}
-                                            </div>
-
-                                            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-                                                <div className="flex items-center gap-4 text-xs text-[#5E5E5E]">
-                          <span className="flex items-center gap-1">
-                            <BedDouble className="w-3.5 h-3.5" /> {featured.beds}
-                          </span>
-                                                    <span className="flex items-center gap-1">
-                            <Bath className="w-3.5 h-3.5" /> {featured.baths}
-                          </span>
-                                                    <span className="flex items-center gap-1">
-                            <Ruler className="w-3.5 h-3.5" /> {featured.areaM2} m²
-                          </span>
-                                                </div>
-
-                                                <div className="flex items-center gap-4">
-                                                    <button
-                                                        type="button"
-                                                        onClick={async () => {
-                                                            const r = await shareListing(featured);
-                                                            if (r === "copied") {
-                                                                pushToast({
-                                                                    variant: "success",
-                                                                    title: copy[lang].toast.copied,
-                                                                    description: copy[lang].toast.copiedDesc,
-                                                                });
-                                                            }
-                                                        }}
-                                                        className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors flex items-center gap-2"
-                                                        title={lang === "en" ? "Share listing" : "Compartir propiedad"}
-                                                    >
-                                                        <Share2 className="w-3.5 h-3.5" />
-                                                        {copy[lang].properties.share}
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setLocation(`/properties/${featured.id}`)}
-                                                        className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors"
-                                                    >
-                                                        OPEN
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setInquiry(featured);
-                                                            setInqMsg("");
-                                                        }}
-                                                        className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors"
-                                                    >
-                                                        {copy[lang].properties.inquire}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Reveal>
-                        </div>
-                    </section>
-                )}
 
                 {/* WHY INVEST */}
                 <section id="who" className="relative py-32 bg-[#1a1a1a] text-[#F5F1EA] overflow-hidden">
@@ -1235,9 +1245,7 @@ export default function HomeMexicoSite() {
 
                         <div className="w-full md:w-1/2 space-y-8">
                             <Reveal>
-                <span className="text-[#B78454] text-xs tracking-[0.2em] font-bold block mb-4">
-                  {why.label}
-                </span>
+                                <span className="text-[#B78454] text-xs tracking-[0.2em] font-bold block mb-4">{why.label}</span>
                                 <h2 className="text-4xl md:text-5xl font-serif leading-tight">{why.headline}</h2>
                             </Reveal>
 
@@ -1245,7 +1253,6 @@ export default function HomeMexicoSite() {
                                 <p className="text-lg text-white/70 leading-relaxed font-light">{why.pitch}</p>
                             </Reveal>
 
-                            {/* Trust strip */}
                             <Reveal delay={0.3}>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                                     <div className="border border-white/10 bg-white/5 p-5">
@@ -1295,16 +1302,12 @@ export default function HomeMexicoSite() {
                     onShare={async (l) => {
                         const r = await shareListing(l);
                         if (r === "copied") {
-                            pushToast({
-                                variant: "success",
-                                title: copy[lang].toast.copied,
-                                description: copy[lang].toast.copiedDesc,
-                            });
+                            pushToast({ variant: "success", title: copy[lang].toast.copied, description: copy[lang].toast.copiedDesc });
                         }
                     }}
                 />
 
-                {/* LIFESTYLE (3 clickable cards) */}
+                {/* LIFESTYLE */}
                 <section id="lifestyle" className="py-24 bg-[#F5F1EA]">
                     <div className="container mx-auto px-6">
                         <div className="text-center mb-16 max-w-3xl mx-auto">
@@ -1328,7 +1331,7 @@ export default function HomeMexicoSite() {
                                 <motion.img src={BEACH_IMG} alt="Locations" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             </Reveal>
 
-                            {/* HOME CARE A-Z */}
+                            {/* HOME CARE */}
                             <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.15}>
                                 <button type="button" onClick={() => setOverlay("homecare")} className="absolute inset-0 z-20" aria-label="Open home care" />
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
@@ -1338,20 +1341,20 @@ export default function HomeMexicoSite() {
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
-                                <motion.img src={DINING_IMG} alt="Home Care" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                <motion.img src={INTERIOR_IMG} alt="Home care" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             </Reveal>
 
-                            {/* GLOBAL ACCESS -> ABOUT OVERLAY */}
+                            {/* ABOUT US */}
                             <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.25}>
                                 <button type="button" onClick={() => setOverlay("about")} className="absolute inset-0 z-20" aria-label="Open about us" />
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
-                                    <h3 className="text-white text-3xl font-serif">{lifestyle.cards.global.title}</h3>
+                                    <h3 className="text-white text-3xl font-serif">{lifestyle.cards.about.title}</h3>
                                     <p className="text-white/80 text-sm tracking-widest uppercase mt-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-500">
-                                        {lifestyle.cards.global.subtitle}
+                                        {lifestyle.cards.about.subtitle}
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
-                                <motion.img src={CENOTE_IMG} alt="Global Access" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                <motion.img src={CENOTE_IMG} alt="About us" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             </Reveal>
                         </div>
                     </div>
@@ -1407,11 +1410,7 @@ export default function HomeMexicoSite() {
                                                 const message = contactMsg.trim();
 
                                                 if (!name || !email || !message || !isValidEmail(email)) {
-                                                    pushToast({
-                                                        variant: "error",
-                                                        title: copy[lang].toast.invalid,
-                                                        description: copy[lang].toast.invalidDesc,
-                                                    });
+                                                    pushToast({ variant: "error", title: copy[lang].toast.invalid, description: copy[lang].toast.invalidDesc });
                                                     return;
                                                 }
 
@@ -1425,17 +1424,9 @@ export default function HomeMexicoSite() {
                                                     setContactEmail("");
                                                     setContactMsg("");
 
-                                                    pushToast({
-                                                        variant: "success",
-                                                        title: copy[lang].toast.sent,
-                                                        description: copy[lang].toast.sentDesc,
-                                                    });
+                                                    pushToast({ variant: "success", title: copy[lang].toast.sent, description: copy[lang].toast.sentDesc });
                                                 } catch (err: any) {
-                                                    pushToast({
-                                                        variant: "error",
-                                                        title: copy[lang].toast.error,
-                                                        description: err?.message || copy[lang].contact.fail,
-                                                    });
+                                                    pushToast({ variant: "error", title: copy[lang].toast.error, description: err?.message || "Failed to send." });
                                                 } finally {
                                                     setSending(false);
                                                 }
@@ -1506,12 +1497,8 @@ export default function HomeMexicoSite() {
                     <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                         <p className="text-xs tracking-widest">© 2025 LA MAISON MEXICO</p>
                         <div className="flex gap-6">
-                            <a href="#" className="hover:text-white transition-colors text-xs tracking-widest">
-                                INSTAGRAM
-                            </a>
-                            <a href="#" className="hover:text-white transition-colors text-xs tracking-widest">
-                                LINKEDIN
-                            </a>
+                            <a href="#" className="hover:text-white transition-colors text-xs tracking-widest">INSTAGRAM</a>
+                            <a href="#" className="hover:text-white transition-colors text-xs tracking-widest">LINKEDIN</a>
                         </div>
                     </div>
                 </footer>
@@ -1550,11 +1537,7 @@ export default function HomeMexicoSite() {
                                         const message = (inqMsg || "").trim();
 
                                         if (!name || !email || !message || !isValidEmail(email)) {
-                                            pushToast({
-                                                variant: "error",
-                                                title: copy[lang].toast.invalid,
-                                                description: copy[lang].toast.invalidDesc,
-                                            });
+                                            pushToast({ variant: "error", title: copy[lang].toast.invalid, description: copy[lang].toast.invalidDesc });
                                             return;
                                         }
 
@@ -1562,30 +1545,16 @@ export default function HomeMexicoSite() {
                                             setSending(true);
                                             pushToast({ variant: "info", title: copy[lang].toast.sending });
 
-                                            await sendInquiry({
-                                                name,
-                                                email,
-                                                message,
-                                                listingId: inquiry.id,
-                                                listingTitle: inquiry.title,
-                                            });
+                                            await sendInquiry({ name, email, message, listingId: inquiry.id, listingTitle: inquiry.title });
 
                                             setInquiry(null);
                                             setInqName("");
                                             setInqEmail("");
                                             setInqMsg("");
 
-                                            pushToast({
-                                                variant: "success",
-                                                title: copy[lang].toast.sent,
-                                                description: copy[lang].toast.sentDesc,
-                                            });
+                                            pushToast({ variant: "success", title: copy[lang].toast.sent, description: copy[lang].toast.sentDesc });
                                         } catch (err: any) {
-                                            pushToast({
-                                                variant: "error",
-                                                title: copy[lang].toast.error,
-                                                description: err?.message || copy[lang].contact.fail,
-                                            });
+                                            pushToast({ variant: "error", title: copy[lang].toast.error, description: err?.message || "Failed to send." });
                                         } finally {
                                             setSending(false);
                                         }
@@ -1609,44 +1578,16 @@ export default function HomeMexicoSite() {
                     )}
                 </AnimatePresence>
 
-                {/* Full-page overlays */}
-                <FullPageOverlay open={overlay === "locations"} title={overlays.locations.title} onClose={() => setOverlay(null)}>
-                    <p className="text-[#5E5E5E] leading-relaxed">{overlays.locations.body}</p>
-                    <div className="mt-8 border-t border-black/10 pt-6">
-                        <div className="text-[10px] tracking-[0.26em] uppercase text-[#5E5E5E]">{overlays.locations.listTitle}</div>
-                        <ul className="mt-4 space-y-2">
-                            {overlays.locations.list.map((x) => (
-                                <li key={x} className="border border-black/10 bg-white px-4 py-3">
-                                    {x}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </FullPageOverlay>
-
-                <FullPageOverlay open={overlay === "homecare"} title={overlays.homecare.title} onClose={() => setOverlay(null)}>
-                    <p className="text-[#5E5E5E] leading-relaxed">{overlays.homecare.body}</p>
-                    <div className="mt-8 grid grid-cols-1 gap-4">
-                        {overlays.homecare.bullets.map((b) => (
-                            <div key={b.h} className="border border-black/10 bg-white p-5">
-                                <div className="text-xs tracking-[0.22em] uppercase text-[#B78454]">{b.h}</div>
-                                <p className="mt-3 text-[#5E5E5E] leading-relaxed">{b.t}</p>
-                            </div>
-                        ))}
-                    </div>
-                </FullPageOverlay>
-
-                <FullPageOverlay open={overlay === "about"} title={overlays.about.title} onClose={() => setOverlay(null)}>
-                    <p className="text-[#5E5E5E] leading-relaxed">{overlays.about.body}</p>
-                    <div className="mt-8 grid grid-cols-1 gap-4">
-                        {overlays.about.bullets.map((b) => (
-                            <div key={b.h} className="border border-black/10 bg-white p-5">
-                                <div className="text-xs tracking-[0.22em] uppercase text-[#B78454]">{b.h}</div>
-                                <p className="mt-3 text-[#5E5E5E] leading-relaxed">{b.t}</p>
-                            </div>
-                        ))}
-                    </div>
-                </FullPageOverlay>
+                {/* Single cinematic overlay */}
+                <CinematicOverlay
+                    open={!!overlayConfig}
+                    title={overlayConfig?.title || ""}
+                    subtitle={overlayConfig?.subtitle || ""}
+                    heroImage={overlayConfig?.hero || HERO_PRIMARY}
+                    onClose={() => setOverlay(null)}
+                >
+                    {overlayConfig?.content}
+                </CinematicOverlay>
             </div>
         </>
     );
@@ -1656,21 +1597,231 @@ export default function HomeMexicoSite() {
 /*                                PROPERTIES                                  */
 /* -------------------------------------------------------------------------- */
 
-type FilterKey = "all" | "beach" | "city" | "family" | "investment";
+type RegionKey = "riviera" | "yucatan" | "cdmx" | "oaxaca" | "other";
 
-function classify(listing: Listing): FilterKey[] {
-    const tags: FilterKey[] = [];
+function regionFromLocation(loc: string): RegionKey {
+    const s = (loc || "").toLowerCase();
 
-    const loc = (listing.location || "").toLowerCase();
-    if (loc.includes("tulum") || loc.includes("playa") || loc.includes("canc")) tags.push("beach");
-    if (loc.includes("mérida") || loc.includes("merida")) tags.push("city");
+    // Riviera Maya
+    if (s.includes("tulum") || s.includes("playa") || s.includes("canc")) return "riviera";
 
-    if (listing.beds >= 3) tags.push("family");
+    // Yucatán region (including Campeche)
+    if (s.includes("mérida") || s.includes("merida") || s.includes("yucat") || s.includes("campeche")) return "yucatan";
 
-    // simple "investment" heuristic (adjust whenever you want)
-    if (listing.priceUSD <= 650000) tags.push("investment");
+    // Mexico City
+    if (s.includes("ciudad de méxico") || s.includes("mexico city") || s.includes("cdmx")) return "cdmx";
 
-    return tags;
+    // Oaxaca
+    if (s.includes("oaxaca")) return "oaxaca";
+
+    return "other";
+}
+
+type FiltersState = {
+    priceMin: string;
+    priceMax: string;
+    bedsMin: string;
+    bathsMin: string;
+    areaMin: string;
+    type: "any" | Listing["type"];
+    regions: Record<RegionKey, boolean>;
+};
+
+function defaultFilters(): FiltersState {
+    return {
+        priceMin: "",
+        priceMax: "",
+        bedsMin: "",
+        bathsMin: "",
+        areaMin: "",
+        type: "any",
+        regions: { riviera: false, yucatan: false, cdmx: false, oaxaca: false, other: false },
+    };
+}
+
+function FiltersDrawer({
+                           open,
+                           lang,
+                           types,
+                           availableRegions,
+                           draft,
+                           setDraft,
+                           onClose,
+                           onClear,
+                           onApply,
+                       }: {
+    open: boolean;
+    lang: Lang;
+    types: Listing["type"][];
+    availableRegions: Set<RegionKey>;
+    draft: FiltersState;
+    setDraft: React.Dispatch<React.SetStateAction<FiltersState>>;
+    onClose: () => void;
+    onClear: () => void;
+    onApply: () => void;
+}) {
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open, onClose]);
+
+    const t = copy[lang].properties;
+
+    const regionOptions: Array<{ key: RegionKey; label: string }> = [
+        { key: "riviera", label: "Riviera Maya (Tulum / Playa / Cancún)" },
+        { key: "yucatan", label: "Yucatán (Mérida / Campeche)" },
+        { key: "cdmx", label: "Mexico City (CDMX)" },
+        { key: "oaxaca", label: "Oaxaca" },
+        { key: "other", label: "Other" },
+    ];
+
+    return (
+        <AnimatePresence>
+            {open && (
+                <motion.div
+                    className="fixed inset-0 z-[85] bg-black/60 backdrop-blur-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={onClose}
+                >
+                    <motion.div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-0 top-0 h-full w-full max-w-md bg-[#F5F1EA] border-l border-black/10 shadow-2xl overflow-auto"
+                        initial={{ x: 24, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: 24, opacity: 0 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                        <div className="p-6 border-b border-black/10 flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] tracking-[0.28em] uppercase text-[#B78454]">LA MAISON</div>
+                                <div className="mt-2 font-serif text-2xl">Filters</div>
+                            </div>
+                            <button onClick={onClose} className="text-black/50 hover:text-black transition-colors">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t.priceMin}</Label>
+                                    <Input
+                                        value={draft.priceMin}
+                                        onChange={(e) => setDraft((p) => ({ ...p, priceMin: e.target.value }))}
+                                        className="rounded-none border-gray-300 bg-white"
+                                        inputMode="numeric"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t.priceMax}</Label>
+                                    <Input
+                                        value={draft.priceMax}
+                                        onChange={(e) => setDraft((p) => ({ ...p, priceMax: e.target.value }))}
+                                        className="rounded-none border-gray-300 bg-white"
+                                        inputMode="numeric"
+                                        placeholder="1000000"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t.bedsMin}</Label>
+                                    <Input
+                                        value={draft.bedsMin}
+                                        onChange={(e) => setDraft((p) => ({ ...p, bedsMin: e.target.value }))}
+                                        className="rounded-none border-gray-300 bg-white"
+                                        inputMode="numeric"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t.bathsMin}</Label>
+                                    <Input
+                                        value={draft.bathsMin}
+                                        onChange={(e) => setDraft((p) => ({ ...p, bathsMin: e.target.value }))}
+                                        className="rounded-none border-gray-300 bg-white"
+                                        inputMode="numeric"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t.areaMin}</Label>
+                                    <Input
+                                        value={draft.areaMin}
+                                        onChange={(e) => setDraft((p) => ({ ...p, areaMin: e.target.value }))}
+                                        className="rounded-none border-gray-300 bg-white"
+                                        inputMode="numeric"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t.type}</Label>
+                                <select
+                                    value={draft.type}
+                                    onChange={(e) => setDraft((p) => ({ ...p, type: e.target.value as any }))}
+                                    className="w-full rounded-none border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:border-[#B78454]"
+                                >
+                                    <option value="any">{t.any}</option>
+                                    {types.map((x) => (
+                                        <option key={x} value={x}>
+                                            {x}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-3">
+                                <Label className="text-xs uppercase tracking-widest text-muted-foreground">{t.regions}</Label>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {regionOptions
+                                        .filter((r) => availableRegions.has(r.key))
+                                        .map((r) => (
+                                            <label key={r.key} className="flex items-center gap-3 border border-black/10 bg-white px-4 py-3 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={draft.regions[r.key]}
+                                                    onChange={(e) => setDraft((p) => ({ ...p, regions: { ...p.regions, [r.key]: e.target.checked } }))}
+                                                />
+                                                <span className="text-sm">{r.label}</span>
+                                            </label>
+                                        ))}
+                                </div>
+                                <div className="text-xs text-[#5E5E5E] leading-relaxed">
+                                    Tip: Select multiple locations to broaden results.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-black/10 flex items-center justify-between gap-3">
+                            <button
+                                onClick={onClear}
+                                className="border border-black/10 bg-white px-6 py-4 text-[10px] tracking-[0.26em] uppercase hover:border-[#B78454]/50 transition-colors"
+                            >
+                                {t.clear}
+                            </button>
+
+                            <button
+                                onClick={onApply}
+                                className="border border-black/10 bg-[#1a1a1a] text-white px-6 py-4 text-[10px] tracking-[0.26em] uppercase hover:bg-[#B78454] transition-colors"
+                            >
+                                {t.apply}
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 }
 
 function PropertiesSection({
@@ -1688,53 +1839,99 @@ function PropertiesSection({
     onInquire: (l: Listing) => void;
     onShare: (l: Listing) => void;
 }) {
-    const [filter, setFilter] = useState<FilterKey>("all");
+    const t = copy[lang].properties;
+
+    const types = useMemo(() => {
+        const s = new Set<Listing["type"]>();
+        listings.forEach((l) => s.add(l.type));
+        return Array.from(s).sort();
+    }, [listings]);
+
+    const availableRegions = useMemo(() => {
+        const s = new Set<RegionKey>();
+        listings.forEach((l) => s.add(regionFromLocation(l.location)));
+        return s;
+    }, [listings]);
+
+    const [filters, setFilters] = useState<FiltersState>(defaultFilters());
+    const [draft, setDraft] = useState<FiltersState>(defaultFilters());
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const filtered = useMemo(() => {
-        if (filter === "all") return listings;
-        return listings.filter((l) => classify(l).includes(filter));
-    }, [filter, listings]);
+        const priceMin = toNum(filters.priceMin);
+        const priceMax = toNum(filters.priceMax);
+        const bedsMin = toNum(filters.bedsMin);
+        const bathsMin = toNum(filters.bathsMin);
+        const areaMin = toNum(filters.areaMin);
+
+        const anyRegionSelected = Object.values(filters.regions).some(Boolean);
+        const selectedRegions = Object.entries(filters.regions)
+            .filter(([, v]) => v)
+            .map(([k]) => k as RegionKey);
+
+        return listings.filter((l) => {
+            if (priceMin != null && l.priceUSD < priceMin) return false;
+            if (priceMax != null && l.priceUSD > priceMax) return false;
+            if (bedsMin != null && l.beds < bedsMin) return false;
+            if (bathsMin != null && l.baths < bathsMin) return false;
+            if (areaMin != null && l.areaM2 < areaMin) return false;
+
+            if (filters.type !== "any" && l.type !== filters.type) return false;
+
+            if (anyRegionSelected) {
+                const r = regionFromLocation(l.location);
+                if (!selectedRegions.includes(r)) return false;
+            }
+
+            return true;
+        });
+    }, [filters, listings]);
+
+    const activeCount = useMemo(() => {
+        let c = 0;
+        if (filters.priceMin.trim()) c++;
+        if (filters.priceMax.trim()) c++;
+        if (filters.bedsMin.trim()) c++;
+        if (filters.bathsMin.trim()) c++;
+        if (filters.areaMin.trim()) c++;
+        if (filters.type !== "any") c++;
+        if (Object.values(filters.regions).some(Boolean)) c++;
+        return c;
+    }, [filters]);
 
     return (
         <section id={id} className="py-24 bg-white relative">
             <div className="container mx-auto px-6">
                 <Reveal>
-                    <div className="mb-10 text-left md:text-center">
-                        <h2 className="text-4xl md:text-5xl font-serif text-[#1a1a1a]">
-                            {copy[lang].properties.title}
-                        </h2>
+                    <div className="mb-12 text-left md:text-center">
+                        <h2 className="text-4xl md:text-5xl font-serif text-[#1a1a1a]">{t.title}</h2>
+
                         <div className="mt-4 flex items-center gap-3 md:justify-center">
                             <div className="h-[1px] w-14 bg-[#B78454]/90" />
-                            <div className="text-[10px] tracking-[0.28em] uppercase text-[#5E5E5E]">
-                                {copy[lang].properties.curated}
-                            </div>
+                            <div className="text-[10px] tracking-[0.28em] uppercase text-[#5E5E5E]">{t.curated}</div>
                         </div>
 
-                        {/* Filter chips */}
-                        <div className="mt-8 flex flex-wrap items-center gap-2 md:justify-center">
-                            <div className="text-[10px] tracking-[0.26em] uppercase text-[#5E5E5E] flex items-center gap-2 mr-2">
-                                <Filter className="h-3.5 w-3.5" />
-                                {copy[lang].properties.filtersLabel}
-                            </div>
+                        <div className="mt-8 flex items-center justify-between md:justify-center md:gap-6 flex-wrap gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDraft(filters);
+                                    setDrawerOpen(true);
+                                }}
+                                className="border border-black/10 bg-white px-5 py-3 text-[10px] tracking-[0.26em] uppercase hover:border-[#B78454]/50 transition-colors flex items-center gap-2"
+                            >
+                                <SlidersHorizontal className="h-4 w-4" />
+                                {t.openFilters}
+                                {activeCount > 0 && (
+                                    <span className="ml-2 border border-black/10 bg-[#F5F1EA] px-2 py-1 text-[10px] tracking-[0.26em]">
+                    {activeCount}
+                  </span>
+                                )}
+                            </button>
 
-                            {(["all", "beach", "city", "family", "investment"] as FilterKey[]).map((k) => {
-                                const active = filter === k;
-                                const label = copy[lang].properties.filters[k];
-                                return (
-                                    <button
-                                        key={k}
-                                        onClick={() => setFilter(k)}
-                                        className={cn(
-                                            "border px-3 py-2 text-[10px] tracking-[0.26em] uppercase transition-colors",
-                                            active
-                                                ? "border-[#B78454] bg-[#B78454] text-white"
-                                                : "border-black/10 bg-white text-[#1a1a1a] hover:border-[#B78454]/50"
-                                        )}
-                                    >
-                                        {label}
-                                    </button>
-                                );
-                            })}
+                            <div className="text-xs tracking-[0.14em] uppercase text-[#5E5E5E]">
+                                {t.results}: <span className="text-[#1a1a1a] font-medium">{filtered.length}</span>
+                            </div>
                         </div>
                     </div>
                 </Reveal>
@@ -1755,11 +1952,24 @@ function PropertiesSection({
                 </div>
 
                 {filtered.length === 0 && (
-                    <div className="mt-10 text-center text-sm text-[#5E5E5E]">
-                        {lang === "en" ? "No listings match this filter yet." : "Aún no hay propiedades para este filtro."}
-                    </div>
+                    <div className="mt-10 text-center text-sm text-[#5E5E5E]">{t.noMatch}</div>
                 )}
             </div>
+
+            <FiltersDrawer
+                open={drawerOpen}
+                lang={lang}
+                types={types}
+                availableRegions={availableRegions}
+                draft={draft}
+                setDraft={setDraft}
+                onClose={() => setDrawerOpen(false)}
+                onClear={() => setDraft(defaultFilters())}
+                onApply={() => {
+                    setFilters(draft);
+                    setDrawerOpen(false);
+                }}
+            />
         </section>
     );
 }
@@ -1825,9 +2035,7 @@ function PropertyRow({
                             </div>
                         </div>
 
-                        <div className="mt-4 text-sm text-[#5E5E5E] leading-relaxed line-clamp-2">
-                            {l.description[lang]}
-                        </div>
+                        <div className="mt-4 text-sm text-[#5E5E5E] leading-relaxed line-clamp-2">{l.description[lang]}</div>
 
                         <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4 text-xs text-[#5E5E5E]">
