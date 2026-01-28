@@ -8,15 +8,12 @@ import { metaImagesPlugin } from "./vite-plugin-meta-images";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
-
 export default defineConfig({
-  base: "/LA-MAISON/",
-  plugins: [
-    react(),
-    tailwindcss(),
-    metaImagesPlugin(),
-  ],
+  // IMPORTANT: Render serves at root "/", not "/LA-MAISON/"
+  base: "/",
+
+  plugins: [react(), tailwindcss(), metaImagesPlugin()],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
@@ -24,16 +21,20 @@ export default defineConfig({
       "@assets": path.resolve(__dirname, "attached_assets"),
     },
   },
+
   css: {
     postcss: {
       plugins: [],
     },
   },
+
   root: path.resolve(__dirname, "client"),
+
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
+
   server: {
     host: "0.0.0.0",
     allowedHosts: true,

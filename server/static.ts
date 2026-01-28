@@ -3,18 +3,14 @@ import express from "express";
 import path from "path";
 
 export function serveStatic(app: Express) {
-  // In production, Vite builds to: dist/public
+  // Vite outputs to dist/public (because vite.config.ts outDir points there)
   const publicDir = path.resolve(process.cwd(), "dist", "public");
 
-  // Serve /assets/* and other static files
-  app.use(express.static(publicDir, { index: false }));
+  // Serve assets like /assets/index-xxxx.js
+  app.use(express.static(publicDir));
 
-  // SPA fallback ONLY for non-file routes
-  app.get("*", (req, res) => {
-    // If it looks like a file request, do NOT send index.html
-    if (req.path.includes(".") || req.path.startsWith("/assets/")) {
-      return res.status(404).end();
-    }
+  // SPA fallback for client-side routes (e.g. /properties/LM-001)
+  app.get("*", (_req, res) => {
     res.sendFile(path.join(publicDir, "index.html"));
   });
 }
