@@ -1,0 +1,376 @@
+[1mdiff --git a/client/src/pages/home.tsx b/client/src/pages/home.tsx[m
+[1mindex dce6727..871d41b 100644[m
+[1m--- a/client/src/pages/home.tsx[m
+[1m+++ b/client/src/pages/home.tsx[m
+[36m@@ -9,7 +9,6 @@[m [mimport {[m
+ } from "framer-motion";[m
+ import {[m
+     Home as HomeIcon,[m
+[31m-    Search,[m
+     Info,[m
+     Utensils,[m
+     Globe,[m
+[36m@@ -21,12 +20,14 @@[m [mimport {[m
+     X,[m
+     ArrowDown,[m
+     Share2,[m
+[31m-    ShieldCheck,[m
+[32m+[m[32m    SlidersHorizontal,[m
+[32m+[m[32m    ChevronRight,[m
+[32m+[m[32m    Sparkles,[m
+[32m+[m[32m    CheckCircle2,[m
+     Clock,[m
+     Handshake,[m
+[32m+[m[32m    ShieldCheck,[m
+     Languages,[m
+[31m-    Star,[m
+[31m-    Filter,[m
+ } from "lucide-react";[m
+ import Lenis from "lenis";[m
+ import { useLocation } from "wouter";[m
+[36m@@ -43,15 +44,9 @@[m [mimport TEXTURE_IMG from "@assets/generated_images/beige_plaster_texture.png";[m
+ import INTERIOR_IMG from "@assets/generated_images/minimalist_hacienda_interior.png";[m
+ import CENOTE_IMG from "@assets/generated_images/mystical_yucatan_cenote.png";[m
+ import BEACH_IMG from "@assets/generated_images/luxury_beach_club_tulum.png";[m
+[31m-import DINING_IMG from "@assets/generated_images/mexican_fine_dining_detail.png";[m
+ import TEXTILE_IMG from "@assets/generated_images/artisanal_mexican_textiles.png";[m
+ [m
+[31m-import {[m
+[31m-    LISTINGS,[m
+[31m-    LISTING_IMAGES,[m
+[31m-    formatUSD,[m
+[31m-    type Listing,[m
+[31m-} from "@/data/listings";[m
+[32m+[m[32mimport { LISTINGS, LISTING_IMAGES, formatUSD, type Listing } from "@/data/listings";[m
+ [m
+ // ---------------- Images ----------------[m
+ const HERO_PRIMARY = HERO_PRIMARY_IMG;[m
+[36m@@ -79,48 +74,37 @@[m [mtype Lang = "en" | "es";[m
+ [m
+ const copy = {[m
+     en: {[m
+[31m-        nav: {[m
+[31m-            home: "HOME",[m
+[31m-            who: "WHY INVEST",[m
+[31m-            properties: "PROPERTIES",[m
+[31m-            lifestyle: "LIFESTYLE",[m
+[31m-            contact: "CONTACT",[m
+[31m-        },[m
+[32m+[m[32m        nav: { home: "HOME", who: "WHY INVEST", properties: "PROPERTIES", lifestyle: "LIFESTYLE", contact: "CONTACT" },[m
+         properties: {[m
+             title: "PROPERTIES",[m
+             inquire: "INQUIRE",[m
+             share: "SHARE",[m
+             curated: "Curated selection",[m
+[31m-            filtersLabel: "Filters",[m
+[31m-            filters: {[m
+[31m-                all: "All",[m
+[31m-                beach: "Beach",[m
+[31m-                city: "City",[m
+[31m-                family: "Family",[m
+[31m-                investment: "Investment",[m
+[31m-            },[m
+[31m-            featuredLabel: "FEATURED",[m
+[31m-            viewFeatured: "VIEW FEATURED",[m
+[31m-        },[m
+[31m-        contact: {[m
+[31m-            title: "CONTACT",[m
+[31m-            send: "SEND MESSAGE",[m
+[31m-            name: "Name",[m
+[31m-            email: "Email",[m
+[31m-            message: "Message",[m
+[31m-            success: "Sent! We'll get back to you soon.",[m
+[31m-            fail: "Failed to send. Please try again.",[m
+[32m+[m[32m            openFilters: "FILTERS",[m
+[32m+[m[32m            apply: "APPLY",[m
+[32m+[m[32m            clear: "CLEAR",[m
+[32m+[m[32m            results: "Results",[m
+[32m+[m[32m            any: "Any",[m
+[32m+[m[32m            priceMin: "Min price (USD)",[m
+[32m+[m[32m            priceMax: "Max price (USD)",[m
+[32m+[m[32m            bedsMin: "Beds (min)",[m
+[32m+[m[32m            bathsMin: "Baths (min)",[m
+[32m+[m[32m            areaMin: "Area m² (min)",[m
+[32m+[m[32m            type: "Property type",[m
+[32m+[m[32m            regions: "Locations",[m
+[32m+[m[32m            noMatch: "No listings match these filters yet.",[m
+         },[m
+         toast: {[m
+             copied: "Link copied",[m
+             copiedDesc: "The listing link was copied to your clipboard.",[m
+             invalid: "Please check your details",[m
+[31m-            invalidDesc: "Name, email, and message are required.",[m
+[32m+[m[32m            invalidDesc: "Name, email, and message are required (valid email).",[m
+             sending: "Sending…",[m
+             sent: "Message sent",[m
+             sentDesc: "We received your inquiry and will respond soon.",[m
+             error: "Something went wrong",[m
+         },[m
+[32m+[m[32m        contact: { title: "CONTACT", send: "SEND MESSAGE", name: "Name", email: "Email", message: "Message" },[m
+         why: {[m
+             label: "WHY INVEST WITH US",[m
+             headline: "Local execution. Global-level service.",[m
+[36m@@ -133,118 +117,80 @@[m [mconst copy = {[m
+                 d: { h: "Bilingual support", t: "English/Spanish guidance when it matters." },[m
+             },[m
+         },[m
+[31m-        featured: {[m
+[31m-            title: "Featured Listing",[m
+[31m-            subtitle:[m
+[31m-                "A spotlight property—high quality, strong location, and designed to hold value.",[m
+[31m-            badge: "Curated highlight",[m
+[31m-        },[m
+         lifestyle: {[m
+             title: "Lifestyle",[m
+             subtitle:[m
+                 "Click to explore where we operate, how we take care of your home, and what we do for buyers and owners.",[m
+             cards: {[m
+                 locations: { title: "Locations", subtitle: "Where we operate" },[m
+[31m-                homecare: { title: "Home Care (A–Z)", subtitle: "We handle it end-to-end" },[m
+[31m-                global: { title: "Global Access", subtitle: "Who we are & what we do" },[m
+[32m+[m[32m                homecare: { title: "Home care", subtitle: "We handle it end-to-end" },[m
+[32m+[m[32m                about: { title: "About us", subtitle: "Who we are & what we do" },[m
+             },[m
+         },[m
+         overlays: {[m
+             locations: {[m
+                 title: "Locations",[m
+                 body:[m
+[31m-                    "We operate across key areas in the Riviera Maya and Yucatán, with local partners and on-the-ground execution.",[m
+[32m+[m[32m                    "We operate across key areas in Mexico, with local partners and on-the-ground execution.",[m
+                 listTitle: "Active areas",[m
+[31m-                list: ["Playa del Carmen", "Tulum", "Cancún", "Mérida", "Countryside"],[m
+[32m+[m[32m                list: ["Riviera Maya", "Yucatán", "Mexico City", "Oaxaca", "Countryside"],[m
+             },[m
+             homecare: {[m
+[31m-                title: "Home Care (A–Z)",[m
+[32m+[m[32m                title: "Home care",[m
+                 body:[m
+[31m-                    "From the moment you buy to the way the home lives day-to-day—our team coordinates everything so ownership feels simple.",[m
+[32m+[m[32m                    "From purchase to daily operations—our team coordinates everything so ownership feels effortless and consistent.",[m
+                 bullets: [[m
+[31m-                    {[m
+[31m-                        h: "Design & Setup",[m
+[31m-                        t: "Layout direction, finishes, furnishing and staging—aligned with your home’s identity.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Import & Logistics",[m
+[31m-                        t: "Sourcing, deliveries, customs coordination (when needed), and installation scheduling.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Care While You’re Away",[m
+[31m-                        t: "Checks, cleaning, maintenance, small repairs, and trusted local coordination.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Renting it Out",[m
+[31m-                        t: "Setup guidance and coordination—photos, turnover, and basic operational support.",[m
+[31m-                    },[m
+[32m+[m[32m                    { h: "Design & Setup", t: "Furnishing direction, finishes, staging—aligned with your home’s identity." },[m
+[32m+[m[32m                    { h: "Maintenance & Checks", t: "Routine inspections, preventive maintenance, fast fixes when needed." },[m
+[32m+[m[32m                    { h: "Care While You’re Away", t: "Cleaning, utilities coordination, trusted local management." },[m
+[32m+[m[32m                    { h: "Rent-ready Support", t: "Operational coordination, turnover workflows, standards & quality control." },[m
+                 ],[m
+             },[m
+             about: {[m
+[31m-                title: "Who We Are",[m
+[32m+[m[32m                title: "About us",[m
+                 body:[m
+                     "LA MAISON is a boutique property platform focused on Mexico. We curate strong homes and support buyers and owners with practical, local execution.",[m
+                 bullets: [[m
+[31m-                    {[m
+[31m-                        h: "Curated properties",[m
+[31m-                        t: "Homes selected for quality, location, and long-term value.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Local execution",[m
+[31m-                        t: "We coordinate viewings, paperwork touchpoints, and trusted on-the-ground partners.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Owner support",[m
+[31m-                        t: "Design, setup, care, and light operations so ownership stays frictionless.",[m
+[31m-                    },[m
+[32m+[m[32m                    { h: "Curated properties", t: "Homes selected for quality, location, and long-term value." },[m
+[32m+[m[32m                    { h: "Local execution", t: "We coordinate viewings, paperwork touchpoints, and trusted partners." },[m
+[32m+[m[32m                    { h: "Owner support", t: "Setup, care, and light operations so ownership stays frictionless." },[m
+                 ],[m
+             },[m
+         },[m
+     },[m
+ [m
+     es: {[m
+[31m-        nav: {[m
+[31m-            home: "INICIO",[m
+[31m-            who: "POR QUÉ INVERTIR",[m
+[31m-            properties: "PROPIEDADES",[m
+[31m-            lifestyle: "ESTILO DE VIDA",[m
+[31m-            contact: "CONTACTO",[m
+[31m-        },[m
+[32m+[m[32m        nav: { home: "INICIO", who: "POR QUÉ INVERTIR", properties: "PROPIEDADES", lifestyle: "ESTILO DE VIDA", contact: "CONTACTO" },[m
+         properties: {[m
+             title: "PROPIEDADES",[m
+             inquire: "CONSULTAR",[m
+             share: "COMPARTIR",[m
+             curated: "Selección curada",[m
+[31m-            filtersLabel: "Filtros",[m
+[31m-            filters: {[m
+[31m-                all: "Todas",[m
+[31m-                beach: "Playa",[m
+[31m-                city: "Ciudad",[m
+[31m-                family: "Familiar",[m
+[31m-                investment: "Inversión",[m
+[31m-            },[m
+[31m-            featuredLabel: "DESTACADO",[m
+[31m-            viewFeatured: "VER DESTACADO",[m
+[31m-        },[m
+[31m-        contact: {[m
+[31m-            title: "CONTACTO",[m
+[31m-            send: "ENVIAR MENSAJE",[m
+[31m-            name: "Nombre",[m
+[31m-            email: "Correo",[m
+[31m-            message: "Mensaje",[m
+[31m-            success: "¡Enviado! Te contactaremos pronto.",[m
+[31m-            fail: "No se pudo enviar. Intenta de nuevo.",[m
+[32m+[m[32m            openFilters: "FILTROS",[m
+[32m+[m[32m            apply: "APLICAR",[m
+[32m+[m[32m            clear: "LIMPIAR",[m
+[32m+[m[32m            results: "Resultados",[m
+[32m+[m[32m            any: "Cualquiera",[m
+[32m+[m[32m            priceMin: "Precio mín (USD)",[m
+[32m+[m[32m            priceMax: "Precio máx (USD)",[m
+[32m+[m[32m            bedsMin: "Recámaras (mín)",[m
+[32m+[m[32m            bathsMin: "Baños (mín)",[m
+[32m+[m[32m            areaMin: "Área m² (mín)",[m
+[32m+[m[32m            type: "Tipo de propiedad",[m
+[32m+[m[32m            regions: "Ubicaciones",[m
+[32m+[m[32m            noMatch: "No hay propiedades para estos filtros.",[m
+         },[m
+         toast: {[m
+             copied: "Enlace copiado",[m
+             copiedDesc: "El enlace se copió al portapapeles.",[m
+             invalid: "Revisa tus datos",[m
+[31m-            invalidDesc: "Nombre, correo y mensaje son obligatorios.",[m
+[32m+[m[32m            invalidDesc: "Nombre, correo y mensaje son obligatorios (correo válido).",[m
+             sending: "Enviando…",[m
+             sent: "Mensaje enviado",[m
+             sentDesc: "Recibimos tu consulta y responderemos pronto.",[m
+             error: "Ocurrió un error",[m
+         },[m
+[32m+[m[32m        contact: { title: "CONTACTO", send: "ENVIAR MENSAJE", name: "Nombre", email: "Correo", message: "Mensaje" },[m
+         why: {[m
+             label: "POR QUÉ INVERTIR CON NOSOTROS",[m
+             headline: "Ejecución local. Servicio de nivel global.",[m
+[36m@@ -257,73 +203,43 @@[m [mconst copy = {[m
+                 d: { h: "Soporte bilingüe", t: "Guía en inglés/español cuando importa." },[m
+             },[m
+         },[m
+[31m-        featured: {[m
+[31m-            title: "Propiedad Destacada",[m
+[31m-            subtitle:[m
+[31m-                "Una propiedad en foco—alta calidad, buena ubicación y pensada para mantener valor.",[m
+[31m-            badge: "Selección curada",[m
+[31m-        },[m
+         lifestyle: {[m
+             title: "Estilo de Vida",[m
+             subtitle:[m
+                 "Haz clic para ver dónde operamos, cómo cuidamos tu casa y qué hacemos para compradores y propietarios.",[m
+             cards: {[m
+                 locations: { title: "Ubicaciones", subtitle: "Dónde operamos" },[m
+[31m-                homecare: {[m
+[31m-                    title: "Cuidado del Hogar (A–Z)",[m
+[31m-                    subtitle: "Lo gestionamos de principio a fin",[m
+[31m-                },[m
+[31m-                global: { title: "Acceso Global", subtitle: "Quiénes somos y qué hacemos" },[m
+[32m+[m[32m                homecare: { title: "Cuidado del hogar", subtitle: "Lo gestionamos de principio a fin" },[m
+[32m+[m[32m                about: { title: "Sobre nosotros", subtitle: "Quiénes somos y qué hacemos" },[m
+             },[m
+         },[m
+         overlays: {[m
+             locations: {[m
+                 title: "Ubicaciones",[m
+                 body:[m
+[31m-                    "Operamos en zonas clave de la Riviera Maya y Yucatán, con aliados locales y ejecución en el terreno.",[m
+[32m+[m[32m                    "Operamos en zonas clave de México, con aliados locales y ejecución en el terreno.",[m
+                 listTitle: "Zonas activas",[m
+[31m-                list: ["Playa del Carmen", "Tulum", "Cancún", "Mérida", "Zona rural"],[m
+[32m+[m[32m                list: ["Riviera Maya", "Yucatán", "Ciudad de México", "Oaxaca", "Zona rural"],[m
+             },[m
+             homecare: {[m
+[31m-                title: "Cuidado del Hogar (A–Z)",[m
+[32m+[m[32m                title: "Cuidado del hogar",[m
+                 body:[m
+[31m-                    "Desde la compra hasta la operación del día a día—coordinamos todo para que ser propietario sea simple.",[m
+[32m+[m[32m                    "Desde la compra hasta la operación del día a día—coordinamos todo para que ser propietario sea simple y consistente.",[m
+                 bullets: [[m
+[31m-                    {[m
+[31m-                        h: "Diseño y Preparación",[m
+[31m-                        t: "Distribución, acabados, mobiliario y ambientación alineados con la identidad de tu hogar.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Importación y Logística",[m
+[31m-                        t: "Compras, entregas, aduana (si aplica) y coordinación de instalación.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Cuidado Cuando No Estás",[m
+[31m-                        t: "Revisiones, limpieza, mantenimiento, reparaciones menores y coordinación local.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Renta",[m
+[31m-                        t: "Guía y coordinación—fotos, rotación y soporte operativo básico.",[m
+[31m-                    },[m
+[32m+[m[32m                    { h: "Diseño y Preparación", t: "Mobiliario, acabados y ambientación alineados a la identidad de tu hogar." },[m
+[32m+[m[32m                    { h: "Mantenimiento y Revisiones", t: "Inspecciones, mantenimiento preventivo y reparaciones rápidas." },[m
+[32m+[m[32m                    { h: "Cuidado Cuando No Estás", t: "Limpieza, coordinación de servicios y gestión local confiable." },[m
+[32m+[m[32m                    { h: "Soporte para Renta", t: "Operación, rotación, estándares y control de calidad." },[m
+                 ],[m
+             },[m
+             about: {[m
+[31m-                title: "Quiénes Somos",[m
+[32m+[m[32m                title: "Sobre nosotros",[m
+                 body:[m
+                     "LA MAISON es una plataforma boutique enfocada en México. Curamos propiedades sólidas y apoyamos a compradores y propietarios con ejecución práctica y local.",[m
+                 bullets: [[m
+[31m-                    {[m
+[31m-                        h: "Propiedades curadas",[m
+[31m-                        t: "Casas seleccionadas por calidad, ubicación y valor a largo plazo.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Ejecución local",[m
+[31m-                        t: "Coordinamos visitas, puntos clave del papeleo y aliados confiables.",[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        h: "Soporte al propietario",[m
+[31m-                        t: "Diseño, preparación, cuidado y operación ligera para minimizar fricción.",[m
+[31m-                    },[m
+[32m+[m[32m                    { h: "Propiedades curadas", t: "Casas seleccionadas por calidad, ubicación y valor a largo plazo." },[m
+[32m+[m[32m                    { h: "Ejecución local", t: "Coordinamos visitas, puntos del papeleo y aliados confiables." },[m
+[32m+[m[32m                    { h: "Soporte al propietario", t: "Preparación, cuidado y operación ligera para minimizar fricción." },[m
+                 ],[m
+             },[m
+         },[m
+[36m@@ -345,6 +261,11 @@[m [mfunction isValidEmail(email: string) {[m
+     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);[m
+ }[m
+ [m
+[32m+[m[32mfunction toNum(v: string): number | null {[m
+[32m+[m[32m    const n = Number(String(v).replace(/,/g, "").trim());[m
+[32m+[m[32m    return Number.isFinite(n) ? n : null;[m
+[32m+[m[32m}[m
+[32m+[m
+ // ---------------- Preloader ----------------[m
+ function Preloader({ onComplete }: { onComplete: () => void }) {[m
+     const [loading, setLoading] = useState(true);[m
+[36m@@ -371,24 +292,16 @@[m [mfunction Preloader({ onComplete }: { onComplete: () => void }) {[m
+                         transition={{ duration: 0.8, ease: "easeOut" }}[m
+                         className="flex flex-col items-center gap-4"[m
+                     >[m
+[31m-                        <div className="font-serif tracking-[0.2em] text-3xl md:text-5xl">[m
+[31m-                            LA MAISON[m
+[31m-                        </div>[m
+[32m+[m[32m                        <div className="font-serif tracking-[0.2em] text-3xl md:text-5xl">LA MAISON</div>[m
+                         <div className="h-[1px] w-28 bg-[#B78454]/50 overflow-hidden relative">[m
+                             <motion.div[m
+                                 className="absolute inset-0 bg-[#B78454]"[m
+                                 initial={{ x: "-100%" }}[m
+                                 animate={{ x: "100%" }}[m
+[31m-                                transition={{[m
+[
