@@ -9,7 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-  // IMPORTANT: Render serves at root "/", not "/LA-MAISON/"
+  // IMPORTANT: Render serves your app at the domain root.
+  // If you set base to "/LA-MAISON/", your built index.html will request
+  // /LA-MAISON/assets/... which 404s on Render -> blank page.
   base: "/",
 
   plugins: [react(), tailwindcss(), metaImagesPlugin()],
