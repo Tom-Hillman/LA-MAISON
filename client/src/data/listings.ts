@@ -10,6 +10,14 @@ export type Listing = {
     image: string;
     photos: string[];
     description: { en: string; es: string };
+
+    // Optional — makes maps precise
+    // If omitted, we default to `${location}, Mexico`
+    maps?: {
+        query?: string; // e.g. "Aldea Zama, Tulum, Quintana Roo, Mexico"
+        lat?: number;
+        lng?: number;
+    };
 };
 
 export const LISTING_IMAGES = [
@@ -34,11 +42,12 @@ export const LISTINGS: Listing[] = [
         areaM2: 420,
         type: "Hacienda",
         image: LISTING_IMAGES[4],
-        photos: [LISTING_IMAGES[4], LISTING_IMAGES[6], LISTING_IMAGES[7], LISTING_IMAGES[0]],
+        photos: [LISTING_IMAGES[4], LISTING_IMAGES[6], LISTING_IMAGES[7], LISTING_IMAGES[1]],
         description: {
             en: "Courtyard-centered hacienda with double-height living, hand-finished plaster, and warm quiet light throughout.",
             es: "Hacienda con patio central, sala de doble altura, estuco artesanal y una luz cálida y tranquila.",
         },
+        maps: { query: "Mérida, Yucatán, Mexico" },
     },
     {
         id: "LM-003",
@@ -50,11 +59,12 @@ export const LISTINGS: Listing[] = [
         areaM2: 180,
         type: "Villa",
         image: LISTING_IMAGES[2],
-        photos: [LISTING_IMAGES[2], LISTING_IMAGES[7], LISTING_IMAGES[0], LISTING_IMAGES[6]],
+        photos: [LISTING_IMAGES[2], LISTING_IMAGES[7], LISTING_IMAGES[1], LISTING_IMAGES[6]],
         description: {
             en: "Modern tropical villa designed for privacy—clean lines, shaded terraces, and a strong short-term rental flow.",
             es: "Villa tropical moderna diseñada para privacidad—líneas limpias, terrazas sombreadas y buena renta vacacional.",
         },
+        maps: { query: "Tulum, Quintana Roo, Mexico" },
     },
     {
         id: "LM-004",
@@ -71,6 +81,7 @@ export const LISTINGS: Listing[] = [
             en: "A walkable central base with timeless materials and practical proportions—ideal as a stable city anchor.",
             es: "Base céntrica y caminable con materiales atemporales y proporciones prácticas—ideal como activo urbano.",
         },
+        maps: { query: "Centro Histórico, Mexico City, Mexico" },
     },
     {
         id: "LM-005",
@@ -82,11 +93,12 @@ export const LISTINGS: Listing[] = [
         areaM2: 520,
         type: "Hacienda",
         image: LISTING_IMAGES[4],
-        photos: [LISTING_IMAGES[4], LISTING_IMAGES[0], LISTING_IMAGES[2], LISTING_IMAGES[7]],
+        photos: [LISTING_IMAGES[4], LISTING_IMAGES[1], LISTING_IMAGES[2], LISTING_IMAGES[7]],
         description: {
             en: "Grand-scale entertaining with generous indoor-outdoor rhythm—an architectural statement with warmth.",
             es: "Escala generosa para recibir con ritmo interior-exterior—una propiedad icónica con calidez.",
         },
+        maps: { query: "Mérida, Yucatán, Mexico" },
     },
     {
         id: "LM-006",
@@ -103,9 +115,9 @@ export const LISTINGS: Listing[] = [
             en: "Warm tones, compact courtyard mood, and a slow-living feel—perfect for culture-forward buyers.",
             es: "Tonos cálidos, ambiente de patio y sensación de vida lenta—ideal para compradores amantes de la cultura.",
         },
+        maps: { query: "Sandos Playacar Beach Resort, Playa del Carmen, Quintana Roo, Mexico" },
     },
 
-    // More listings
     {
         id: "LM-007",
         title: "Condo Marina Light",
@@ -121,6 +133,7 @@ export const LISTINGS: Listing[] = [
             en: "Bright marina-side condo with practical layout, strong rental appeal, and effortless lock-and-leave ownership.",
             es: "Condominio luminoso cerca de la marina, distribución práctica y gran potencial de renta.",
         },
+        maps: { query: "Cancún, Quintana Roo, Mexico" },
     },
     {
         id: "LM-008",
@@ -132,11 +145,12 @@ export const LISTINGS: Listing[] = [
         areaM2: 245,
         type: "Villa",
         image: LISTING_IMAGES[7],
-        photos: [LISTING_IMAGES[7], LISTING_IMAGES[2], LISTING_IMAGES[0], LISTING_IMAGES[6]],
+        photos: [LISTING_IMAGES[7], LISTING_IMAGES[2], LISTING_IMAGES[1], LISTING_IMAGES[6]],
         description: {
             en: "Indoor-outdoor villa with shaded terraces and a calm, private atmosphere designed for long weekends or full seasons.",
             es: "Villa interior-exterior con terrazas sombreadas y ambiente privado para estancias largas o fines de semana.",
         },
+        maps: { query: "Tulum, Quintana Roo, Mexico" },
     },
     {
         id: "LM-009",
@@ -147,12 +161,13 @@ export const LISTINGS: Listing[] = [
         baths: 2,
         areaM2: 210,
         type: "Casa",
-        image: LISTING_IMAGES[0],
-        photos: [LISTING_IMAGES[0], LISTING_IMAGES[5], LISTING_IMAGES[6], LISTING_IMAGES[2]],
+        image: LISTING_IMAGES[4],
+        photos: [LISTING_IMAGES[4], LISTING_IMAGES[5], LISTING_IMAGES[6], LISTING_IMAGES[2]],
         description: {
             en: "A calm courtyard home with soft materials and an easy everyday rhythm—ideal for buyers who want simplicity with style.",
             es: "Casa con patio tranquilo, materiales suaves y ritmo fácil—ideal para quienes buscan simplicidad con estilo.",
         },
+        maps: { query: "Playa del Carmen, Quintana Roo, Mexico" },
     },
     {
         id: "LM-010",
@@ -169,6 +184,7 @@ export const LISTINGS: Listing[] = [
             en: "Elegant arcades, generous courtyards, and classic proportions—built for families, entertaining, and long-term value.",
             es: "Arquerías elegantes, patios generosos y proporciones clásicas—para familia, eventos y valor a largo plazo.",
         },
+        maps: { query: "Mérida, Yucatán, Mexico" },
     },
     {
         id: "LM-011",
@@ -185,6 +201,7 @@ export const LISTINGS: Listing[] = [
             en: "Design-forward city base with walkability and a clean plan—ideal as a stable anchor with strong long-term demand.",
             es: "Base urbana con diseño, gran caminabilidad y plano limpio—ideal como activo estable con buena demanda.",
         },
+        maps: { query: "Roma Norte, Mexico City, Mexico" },
     },
     {
         id: "LM-012",
@@ -196,13 +213,40 @@ export const LISTINGS: Listing[] = [
         areaM2: 320,
         type: "Villa",
         image: LISTING_IMAGES[3],
-        photos: [LISTING_IMAGES[3], LISTING_IMAGES[0], LISTING_IMAGES[7], LISTING_IMAGES[6]],
+        photos: [LISTING_IMAGES[3], LISTING_IMAGES[5], LISTING_IMAGES[7], LISTING_IMAGES[6]],
         description: {
             en: "A spacious villa with shaded garden zones and easy hosting flow—great for owner use with optional rental strategy.",
             es: "Villa amplia con zonas de sombra y excelente flujo para recibir—ideal para uso personal con opción de renta.",
         },
+        maps: { query: "Cancún, Quintana Roo, Mexico" },
     },
 ];
 
 export const formatUSD = (n: number) =>
     n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+// ------------------ MAP HELPERS (NEW) ------------------
+export function getMapsQuery(l: Listing) {
+    return (l.maps?.query?.trim() || `${l.location}, Mexico`).trim();
+}
+
+export function getGoogleMapsUrl(l: Listing) {
+    if (typeof l.maps?.lat === "number" && typeof l.maps?.lng === "number") {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${l.maps.lat},${l.maps.lng}`)}`;
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(getMapsQuery(l))}`;
+}
+
+export function getGoogleMapsEmbedUrl(l: Listing) {
+    // Interactive embed (no API key required)
+    if (typeof l.maps?.lat === "number" && typeof l.maps?.lng === "number") {
+        return `https://www.google.com/maps?q=${encodeURIComponent(`${l.maps.lat},${l.maps.lng}`)}&z=14&output=embed`;
+    }
+    return `https://www.google.com/maps?q=${encodeURIComponent(getMapsQuery(l))}&z=14&output=embed`;
+}
+
+// ------------------ IMAGE HELPERS (NEW) ------------------
+export function getListingImages(l: Listing) {
+    const imgs = [l.image, ...(l.photos || [])].filter(Boolean);
+    return Array.from(new Set(imgs));
+}

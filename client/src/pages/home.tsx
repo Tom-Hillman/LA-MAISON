@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, type ReactNode, type SyntheticEvent } from "react";
 
 import {
     motion,
@@ -50,7 +50,7 @@ import CENOTE_IMG from "@assets/generated_images/mystical_yucatan_cenote.png";
 import BEACH_IMG from "@assets/generated_images/luxury_beach_club_tulum.png";
 import TEXTILE_IMG from "@assets/generated_images/artisanal_mexican_textiles.png";
 
-import { LISTINGS, LISTING_IMAGES, formatUSD, type Listing } from "@/data/listings";
+import { LISTINGS, LISTING_IMAGES, formatUSD, getGoogleMapsUrl, type Listing } from "@/data/listings";
 
 // ---------------- Images ----------------
 const HERO_PRIMARY = HERO_PRIMARY_IMG;
@@ -60,7 +60,7 @@ const HERO_FALLBACK =
 function safeImage(primary: string, fallback: string) {
     return {
         src: primary,
-        onError: (e: React.SyntheticEvent<HTMLImageElement>) => {
+        onError: (e: SyntheticEvent<HTMLImageElement>) => {
             const img = e.currentTarget;
             if ((img as any).dataset?.fallbackApplied) return;
             (img as any).dataset.fallbackApplied = "1";
@@ -74,6 +74,10 @@ function cn(...classes: Array<string | false | undefined | null>) {
 }
 
 type Lang = "en" | "es";
+
+function mapsSearchUrl(query: string) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
 
 // ---------------- Copy ----------------
 const copy = {
@@ -290,7 +294,7 @@ const copy = {
     },
 } as const;
 
-// ---------------- Body scroll lock (FIXED: restores correctly, supports nested modals) ----------------
+// ------------------ Body scroll lock (FIXED: restores correctly, supports nested modals) ----------------
 let __bodyLockCount = 0;
 let __bodyLockScrollY = 0;
 let __prevBodyOverflow = "";
@@ -346,7 +350,6 @@ function useBodyScrollLock(locked: boolean) {
         return () => unlockBodyScroll();
     }, [locked]);
 }
-
 
 // ---------------- Pointer ----------------
 function usePointer() {
@@ -436,7 +439,7 @@ function Reveal({
                     direction = "up",
                     className,
                 }: {
-    children: React.ReactNode;
+    children: ReactNode;
     delay?: number;
     direction?: "up" | "left" | "right";
     className?: string;
@@ -654,10 +657,10 @@ function WhatsAppFixedButton() {
             whileTap={{ scale: 0.98 }}
             className="fixed bottom-5 right-5 z-40 border border-[#8B4513]/40 bg-black/70 px-4 py-3 text-xs tracking-[0.22em] text-[#F5E6D3] hover:bg-black/80"
         >
-      <span className="flex items-center gap-2">
-        <WhatsAppLogo className="h-4 w-4" />
-        <span>WHATSAPP</span>
-      </span>
+            <span className="flex items-center gap-2">
+                <WhatsAppLogo className="h-4 w-4" />
+                <span>WHATSAPP</span>
+            </span>
         </motion.a>
     );
 }
@@ -712,7 +715,7 @@ function PremiumOverlay({
     kicker: string;
     title: string;
     heroImg: string;
-    children: React.ReactNode;
+    children: ReactNode;
     onClose: () => void;
 }) {
     // lock the BODY so the page behind doesn't scroll (fixes PC+mobile)
@@ -813,7 +816,7 @@ const PRICE_PRESETS = [
     { label: "$900k+", min: 900000, max: Infinity },
 ];
 
-function Pill({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
+function Pill({ active, children, onClick }: { active: boolean; children: ReactNode; onClick: () => void }) {
     return (
         <button
             type="button"
@@ -910,8 +913,8 @@ function FilterDrawer({
                                             <Pill key={loc} active={selectedLocations.has(loc)} onClick={() => toggleLocation(loc)}>
                                                 {selectedLocations.has(loc) ? (
                                                     <span className="inline-flex items-center gap-2">
-                            <Check className="w-3 h-3" /> {loc}
-                          </span>
+                                                        <Check className="w-3 h-3" /> {loc}
+                                                    </span>
                                                 ) : (
                                                     loc
                                                 )}
@@ -928,8 +931,8 @@ function FilterDrawer({
                                             <Pill key={tp} active={selectedTypes.has(tp)} onClick={() => toggleType(tp)}>
                                                 {selectedTypes.has(tp) ? (
                                                     <span className="inline-flex items-center gap-2">
-                            <Check className="w-3 h-3" /> {tp}
-                          </span>
+                                                        <Check className="w-3 h-3" /> {tp}
+                                                    </span>
                                                 ) : (
                                                     tp
                                                 )}
@@ -1267,7 +1270,7 @@ export default function HomeMexicoSite() {
                         )}
                     </div>
 
-                    {/* Scroll goes to PROPERTIES (your request) */}
+                    {/* Scroll goes to PROPERTIES */}
                     <motion.div
                         className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 flex flex-col items-center gap-2 cursor-pointer"
                         animate={{ y: [0, 10, 0] }}
@@ -1324,15 +1327,11 @@ export default function HomeMexicoSite() {
                     listings={filteredListings}
                     resultCount={filteredListings.length}
                     onOpen={(l) => {
-                        // Close anything that might keep scroll locked before navigating
                         setOverlay(null);
                         setInquiry(null);
                         setFiltersOpen(false);
-
-                        // Navigate after state flush (prevents scroll-lock cleanup races)
                         setTimeout(() => setLocation(`/properties/${l.id}`), 0);
                     }}
-
                     onInquire={(l) => {
                         setInquiry(l);
                         setInqMsg("");
@@ -1369,7 +1368,7 @@ export default function HomeMexicoSite() {
                                 />
                             </Reveal>
 
-                            {/* HOME CARE (changed image to interior) */}
+                            {/* HOME CARE */}
                             <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.15}>
                                 <button type="button" onClick={() => setOverlay("homecare")} className="absolute inset-0 z-20" aria-label="Open home care" />
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
@@ -1607,10 +1606,17 @@ export default function HomeMexicoSite() {
                             <div className="text-[10px] tracking-[0.28em] uppercase text-black/60">{overlays.locations.listTitle}</div>
                             <div className="mt-4 space-y-2">
                                 {overlays.locations.list.map((x) => (
-                                    <div key={x} className="border border-black/10 bg-[#F5F1EA] px-4 py-3 flex items-center justify-between">
+                                    <a
+                                        key={x}
+                                        href={mapsSearchUrl(`${x}, Mexico`)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="border border-black/10 bg-[#F5F1EA] px-4 py-3 flex items-center justify-between hover:border-black/30 transition-colors"
+                                        title={lang === "en" ? "Open in Google Maps" : "Abrir en Google Maps"}
+                                    >
                                         <span className="text-sm">{x}</span>
                                         <MapPin className="w-4 h-4 text-black/40" />
-                                    </div>
+                                    </a>
                                 ))}
                             </div>
                         </div>
@@ -1864,10 +1870,19 @@ function PropertyRow({
                                 >
                                     {l.title}
                                 </button>
-                                <div className="mt-2 flex items-center gap-2 text-xs tracking-[0.14em] uppercase text-[#5E5E5E]">
+
+                                {/* Location → Google Maps link (NEW) */}
+                                <a
+                                    href={getGoogleMapsUrl(l)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-2 inline-flex items-center gap-2 text-xs tracking-[0.14em] uppercase text-[#5E5E5E] hover:text-[#B78454] transition-colors"
+                                    title={lang === "en" ? "Open in Google Maps" : "Abrir en Google Maps"}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     <MapPin className="w-3.5 h-3.5" />
                                     {l.location}
-                                </div>
+                                </a>
                             </div>
 
                             <div className="text-right">
@@ -1882,15 +1897,15 @@ function PropertyRow({
 
                         <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4 text-xs text-[#5E5E5E]">
-                <span className="flex items-center gap-1">
-                  <BedDouble className="w-3.5 h-3.5" /> {l.beds}
-                </span>
                                 <span className="flex items-center gap-1">
-                  <Bath className="w-3.5 h-3.5" /> {l.baths}
-                </span>
+                                    <BedDouble className="w-3.5 h-3.5" /> {l.beds}
+                                </span>
                                 <span className="flex items-center gap-1">
-                  <Ruler className="w-3.5 h-3.5" /> {l.areaM2} m²
-                </span>
+                                    <Bath className="w-3.5 h-3.5" /> {l.baths}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Ruler className="w-3.5 h-3.5" /> {l.areaM2} m²
+                                </span>
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -1991,9 +2006,20 @@ function InquiryModal({
                             {lang === "en" ? "Inquiry" : "Consulta"} • {inquiry.id}
                         </div>
                         <div className="mt-2 font-serif text-2xl md:text-3xl text-[#1a1a1a]">{inquiry.title}</div>
+
+                        {/* Location → Google Maps link (NEW) */}
                         <div className="mt-2 flex items-center gap-2 text-xs tracking-[0.14em] uppercase text-black/50">
                             <MapPin className="w-3.5 h-3.5" />
-                            {inquiry.location} • {formatUSD(inquiry.priceUSD)}
+                            <a
+                                href={getGoogleMapsUrl(inquiry)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:text-[#B78454] transition-colors"
+                                title={lang === "en" ? "Open in Google Maps" : "Abrir en Google Maps"}
+                            >
+                                {inquiry.location}
+                            </a>{" "}
+                            • {formatUSD(inquiry.priceUSD)}
                         </div>
                     </div>
 
