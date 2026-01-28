@@ -290,40 +290,63 @@ const copy = {
     },
 } as const;
 
-// ---------------- Body scroll lock ----------------
-function useBodyScrollLock(locked: boolean) {
-    useEffect(() => {
-        if (!locked) return;
+// ---------------- Body scroll lock (FIXED: restores correctly, supports nested modals) ----------------
+let __bodyLockCount = 0;
+let __bodyLockScrollY = 0;
+let __prevBodyOverflow = "";
+let __prevBodyPosition = "";
+let __prevBodyTop = "";
+let __prevBodyWidth = "";
+let __prevHtmlOverscroll = "";
 
-        const scrollY = window.scrollY;
-        const body = document.body;
-        const html = document.documentElement;
+function lockBodyScroll() {
+    const body = document.body;
+    const html = document.documentElement;
 
-        const prevBodyOverflow = body.style.overflow;
-        const prevBodyPosition = body.style.position;
-        const prevBodyTop = body.style.top;
-        const prevBodyWidth = body.style.width;
+    if (__bodyLockCount === 0) {
+        __bodyLockScrollY = window.scrollY || 0;
+
+        __prevBodyOverflow = body.style.overflow;
+        __prevBodyPosition = body.style.position;
+        __prevBodyTop = body.style.top;
+        __prevBodyWidth = body.style.width;
+        __prevHtmlOverscroll = html.style.overscrollBehavior;
 
         body.style.overflow = "hidden";
         body.style.position = "fixed";
-        body.style.top = `-${scrollY}px`;
+        body.style.top = `-${__bodyLockScrollY}px`;
         body.style.width = "100%";
-
-        // prevent iOS overscroll chaining
         html.style.overscrollBehavior = "none";
+    }
 
-        return () => {
-            body.style.overflow = prevBodyOverflow;
-            body.style.position = prevBodyPosition;
-            body.style.top = prevBodyTop;
-            body.style.width = prevBodyWidth;
-            html.style.overscrollBehavior = "";
+    __bodyLockCount += 1;
+}
 
-            const y = Number(String(body.style.top || "0").replace("-", "").replace("px", "")) || scrollY;
-            window.scrollTo(0, y);
-        };
+function unlockBodyScroll() {
+    const body = document.body;
+    const html = document.documentElement;
+
+    __bodyLockCount = Math.max(0, __bodyLockCount - 1);
+
+    if (__bodyLockCount === 0) {
+        body.style.overflow = __prevBodyOverflow;
+        body.style.position = __prevBodyPosition;
+        body.style.top = __prevBodyTop;
+        body.style.width = __prevBodyWidth;
+        html.style.overscrollBehavior = __prevHtmlOverscroll;
+
+        window.scrollTo(0, __bodyLockScrollY);
+    }
+}
+
+function useBodyScrollLock(locked: boolean) {
+    useEffect(() => {
+        if (!locked) return;
+        lockBodyScroll();
+        return () => unlockBodyScroll();
     }, [locked]);
 }
+
 
 // ---------------- Pointer ----------------
 function usePointer() {
@@ -335,6 +358,7 @@ function usePointer() {
     }, []);
     return p;
 }
+const PRELOADER_KEY = "lm_preloader_done";
 
 // ---------------- Preloader ----------------
 function Preloader({ onComplete }: { onComplete: () => void }) {
@@ -963,7 +987,10 @@ export default function HomeMexicoSite() {
     const [navOpen, setNavOpen] = useState(false);
     const [lang, setLang] = useState<Lang>("en");
     const [scrolled, setScrolled] = useState(false);
-    const [preloaderDone, setPreloaderDone] = useState(false);
+    const [preloaderDone, setPreloaderDone] = useState(() => {
+        if (typeof window === "undefined") return false;
+        return sessionStorage.getItem(PRELOADER_KEY) === "1";
+    });
 
     const [, setLocation] = useLocation();
 
@@ -991,9 +1018,8 @@ export default function HomeMexicoSite() {
     const [inqEmail, setInqEmail] = useState("");
     const [inqMsg, setInqMsg] = useState("");
 
-    // Lock body when any modal/overlay is open (fixes “page behind scrolls” and phone “stuck”)
+    // Track whether any modal is open (used for Lenis only — DO NOT body-lock here)
     const anyModalOpen = Boolean(overlay) || Boolean(inquiry) || filtersOpen;
-    useBodyScrollLock(anyModalOpen);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 50);
@@ -1114,7 +1140,14 @@ export default function HomeMexicoSite() {
 
     return (
         <>
-            <Preloader onComplete={() => setPreloaderDone(true)} />
+            {!preloaderDone && (
+                <Preloader
+                    onComplete={() => {
+                        sessionStorage.setItem(PRELOADER_KEY, "1");
+                        setPreloaderDone(true);
+                    }}
+                />
+            )}
 
             <div
                 className={cn(
@@ -1296,9 +1329,10 @@ export default function HomeMexicoSite() {
                         setInquiry(null);
                         setFiltersOpen(false);
 
-                        // Navigate next frame (ensures lock cleanup runs)
-                        requestAnimationFrame(() => setLocation(`/properties/${l.id}`));
+                        // Navigate after state flush (prevents scroll-lock cleanup races)
+                        setTimeout(() => setLocation(`/properties/${l.id}`), 0);
                     }}
+
                     onInquire={(l) => {
                         setInquiry(l);
                         setInqMsg("");
