@@ -1,6 +1,4 @@
 import type { Express, Request, Response } from "express";
-import http from "http";
-import https from "https";
 
 type InquiryBody = {
     name?: string;
@@ -9,49 +7,8 @@ type InquiryBody = {
     listingId?: string;
 };
 
-// Minimal POST helper (no fetch dependency, works on any Node)
-function postUrlEncoded(
-    urlString: string,
-    data: Record<string, string>,
-    timeoutMs = 12000
-): Promise<{ status: number; body: string }> {
-    return new Promise((resolve, reject) => {
-        const u = new URL(urlString);
-        const body = new URLSearchParams(data).toString();
-
-        const isHttps = u.protocol === "https:";
-        const lib = isHttps ? https : http;
-
-        const req = lib.request(
-            {
-                method: "POST",
-                hostname: u.hostname,
-                port: u.port ? Number(u.port) : isHttps ? 443 : 80,
-                path: `${u.pathname}${u.search}`,
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Content-Length": Buffer.byteLength(body),
-                    "Accept": "application/json, text/plain, */*",
-                    "User-Agent": "LaMaison/1.0 (+inquiry proxy)",
-                },
-            },
-            (resp) => {
-                let chunks = "";
-                resp.on("data", (d) => (chunks += d));
-                resp.on("end", () => {
-                    resolve({ status: resp.statusCode || 0, body: chunks });
-                });
-            }
-        );
-
-        req.on("error", reject);
-        req.setTimeout(timeoutMs, () => {
-            req.destroy(new Error(`Timeout after ${timeoutMs}ms`));
-        });
-
-        req.write(body);
-        req.end();
-    });
+function safeTrim(v: unknown) {
+    return typeof v === "string" ? v.trim() : "";
 }
 
 export function registerInquiryRoute(app: Express) {
@@ -61,55 +18,108 @@ export function registerInquiryRoute(app: Express) {
         try {
             const { name, email, message, listingId } = (req.body || {}) as InquiryBody;
 
-            if (!email || !message) {
-                return res.status(400).send("Missing email or message");
+            const fromEmail = safeTrim(email);
+            const msg = safeTrim(message);
+
+            if (!fromEmail || !msg) {
+                return res.status(400).json({ ok: false, error: "Missing email or message" });
             }
 
-            const token = (process.env.FORMSUBMIT_TOKEN || "").trim();
+            const token = safeTrim(process.env.FORMSUBMIT_TOKEN);
             if (!token) {
-                return res.status(500).send("Missing FORMSUBMIT_TOKEN env var");
+                // IMPORTANT: in Render you MUST set FORMSUBMIT_TOKEN in Env Vars
+                return res.status(500).json({ ok: false, error: "Missing FORMSUBMIT_TOKEN env var" });
             }
 
-            // IMPORTANT: token belongs in the normal endpoint (matches their activation email)
-            const formsubmitUrl = `https://formsubmit.co/${encodeURIComponent(token)}`;
+            // Node 18+ has fetch. If your runtime is older, this will tell you immediately.
+            if (typeof fetch !== "function") {
+                return res.status(500).json({ ok: false, error: "Server runtime has no fetch() (need Node 18+)" });
+            }
+
+            const publicOrigin =
+                safeTrim(process.env.PUBLIC_ORIGIN) || "https://la-maison.onrender.com";
 
             const subject = listingId ? `New inquiry: ${listingId}` : "New inquiry: La Maison";
 
-            // Server-side submission => disable captcha (captcha needs a browser)
-            const payload: Record<string, string> = {
-                name: name || "",
-                email,
-                message,
-                listingId: listingId || "",
+            // FormSubmit AJAX endpoint
+            const url = `https://formsubmit.co/ajax/${encodeURIComponent(token)}`;
+
+            const body = new URLSearchParams({
+                name: safeTrim(name),
+                email: fromEmail,
+                message: msg,
+                listingId: safeTrim(listingId),
                 _subject: subject,
-                _replyto: email,
+                _replyto: fromEmail,
                 _template: "table",
-                _captcha: "false",
-            };
-
-            const r = await postUrlEncoded(formsubmitUrl, payload, 12000);
-
-            // If FormSubmit doesn’t accept it, DO NOT return 200.
-            if (r.status < 200 || r.status >= 300) {
-                console.error("[inquiry] FormSubmit non-2xx:", {
-                    status: r.status,
-                    ms: Date.now() - startedAt,
-                    body: r.body?.slice(0, 500),
-                });
-                return res.status(502).send("Failed to send email");
-            }
-
-            // Log short response for debugging (Render logs)
-            console.log("[inquiry] sent via FormSubmit:", {
-                status: r.status,
-                ms: Date.now() - startedAt,
-                bodyPreview: (r.body || "").slice(0, 200),
             });
 
-            return res.status(200).json({ ok: true, provider: "formsubmit" });
+            // Timeout so the client never “spins forever”
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12_000);
+
+            try {
+                const resp = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/x-www-form-urlencoded",
+
+                        // These are CRITICAL for FormSubmit to treat it as a real website submission.
+                        Origin: publicOrigin,
+                        Referer: publicOrigin.endsWith("/") ? publicOrigin : publicOrigin + "/",
+
+                        // Some edge cases behave better with a UA present.
+                        "User-Agent":
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
+                    },
+                    body,
+                    signal: controller.signal,
+                });
+
+                // Try JSON first (what we asked for).
+                let data: any = null;
+                let rawText = "";
+                const ct = resp.headers.get("content-type") || "";
+
+                if (ct.includes("application/json")) {
+                    try {
+                        data = await resp.json();
+                    } catch {
+                        data = null;
+                    }
+                } else {
+                    rawText = await resp.text();
+                }
+
+                // FormSubmit sometimes returns 200 + success:false (THIS WAS YOUR ISSUE).
+                const successFlag =
+                    (data && (data.success === true || data.success === "true")) || false;
+
+                if (!resp.ok || (data && data.success === "false") || (data && successFlag === false)) {
+                    console.error("[inquiry] FormSubmit rejected:", {
+                        status: resp.status,
+                        data,
+                        rawPreview: rawText.slice(0, 300),
+                        ms: Date.now() - startedAt,
+                        origin: publicOrigin,
+                    });
+
+                    return res.status(502).json({
+                        ok: false,
+                        error: "FormSubmit rejected the request",
+                        detail: data?.message || "Check Origin/Referer + token activation",
+                    });
+                }
+
+                console.log("[inquiry] formsubmit ok:", { status: resp.status, ms: Date.now() - startedAt });
+                return res.status(200).json({ ok: true, provider: "formsubmit" });
+            } finally {
+                clearTimeout(timeout);
+            }
         } catch (e: any) {
-            console.error("[inquiry] Failed:", e?.message || e, "ms:", Date.now() - startedAt);
-            return res.status(500).send("Failed to send email");
+            console.error("[inquiry] failed:", e);
+            return res.status(500).json({ ok: false, error: "Failed to send inquiry" });
         }
     });
 }
