@@ -1,93 +1,92 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 
 type Variant = "default" | "destructive";
-type ToastKind = "success" | "error" | "info";
 
-type ToastCall = {
+export type ToastOptions = {
     title?: string;
     description?: string;
     variant?: Variant;
-    duration?: number;
+    durationMs?: number;
 };
 
-type ToastItem = {
-    id: string;
-    kind: ToastKind;
-    title?: string;
-    message: string;
+type ToastItem = ToastOptions & { id: string };
+
+type ToastFn = ((opts: ToastOptions) => void) & { toast?: (opts: ToastOptions) => void };
+
+type ToastContextValue = {
+    _push: (opts: ToastOptions) => void;
+    _remove: (id: string) => void;
 };
 
-type ToastFn = (t: ToastCall) => void;
+const ToastContext = createContext<ToastContextValue | null>(null);
 
-const ToastContext = createContext<ToastFn | null>(null);
+// ---- Global hookable function (works outside components too) ----
+let __globalPush: null | ((opts: ToastOptions) => void) = null;
 
-function variantToKind(variant?: Variant): ToastKind {
-    if (variant === "destructive") return "error";
-    return "info";
-}
+export const toast: ToastFn = ((opts: ToastOptions) => {
+    if (__globalPush) __globalPush(opts);
+    else console.warn("ToastProvider not mounted yet. Toast dropped:", opts);
+}) as ToastFn;
+
+// allow toast.toast({...}) too
+toast.toast = toast;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<ToastItem[]>([]);
     const timers = useRef<Record<string, number>>({});
 
-    const remove = useCallback((id: string) => {
-        setItems((prev) => prev.filter((x) => x.id !== id));
+    const _remove = useCallback((id: string) => {
+        setItems((prev) => prev.filter((t) => t.id !== id));
         const t = timers.current[id];
         if (t) window.clearTimeout(t);
         delete timers.current[id];
     }, []);
 
-    const toast = useCallback(
-        ({ title, description, variant = "default", duration = 3200 }: ToastCall) => {
-            const message = (description ?? "").trim();
+    const _push = useCallback(
+        (opts: ToastOptions) => {
             const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const durationMs = opts.durationMs ?? 3200;
 
-            const next: ToastItem = {
-                id,
-                kind: variantToKind(variant),
-                title: title?.trim() || undefined,
-                message: message || " ",
-            };
+            const next: ToastItem = { id, ...opts };
+            setItems((prev) => [next, ...prev].slice(0, 4));
 
-            setItems((prev) => [next, ...prev].slice(0, 3));
-            timers.current[id] = window.setTimeout(() => remove(id), duration);
+            timers.current[id] = window.setTimeout(() => _remove(id), durationMs);
         },
-        [remove]
+        [_remove]
     );
 
-    const value = useMemo(() => toast, [toast]);
+    // wire global
+    __globalPush = _push;
+
+    const value = useMemo(() => ({ _push, _remove }), [_push, _remove]);
 
     return (
         <ToastContext.Provider value={value}>
             {children}
 
-            {/* Toast stack */}
-            <div className="fixed right-4 top-4 z-[9999] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3">
+            <div className="fixed right-4 top-4 z-[99999] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3">
                 {items.map((t) => (
                     <div
                         key={t.id}
                         className={[
                             "relative overflow-hidden rounded-2xl border bg-white/90 p-4 shadow-xl backdrop-blur",
-                            "transition-all duration-200",
-                            t.kind === "error" ? "border-red-200" : "border-slate-200",
+                            t.variant === "destructive" ? "border-red-200" : "border-slate-200",
                         ].join(" ")}
                     >
-                        {/* accent bar */}
                         <div
                             className={[
                                 "absolute left-0 top-0 h-full w-1.5",
-                                t.kind === "error" ? "bg-red-500" : "bg-slate-500",
+                                t.variant === "destructive" ? "bg-red-500" : "bg-slate-500",
                             ].join(" ")}
                         />
-
                         <div className="flex items-start gap-3">
                             <div className="min-w-0 flex-1">
                                 {t.title && <div className="text-sm font-semibold text-slate-900">{t.title}</div>}
-                                <div className="text-sm text-slate-600">{t.message}</div>
+                                {t.description && <div className="text-sm text-slate-600">{t.description}</div>}
                             </div>
 
                             <button
-                                onClick={() => remove(t.id)}
+                                onClick={() => _remove(t.id)}
                                 className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                                 aria-label="Dismiss"
                                 type="button"
@@ -103,7 +102,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useToast(): ToastFn {
-    const toast = useContext(ToastContext);
-    if (!toast) throw new Error("useToast must be used inside <ToastProvider>");
-    return toast;
+    const ctx = useContext(ToastContext);
+    if (!ctx) {
+        // still return a callable function so your app doesn't crash
+        return toast;
+    }
+
+    const fn: ToastFn = ((opts: ToastOptions) => ctx._push(opts)) as ToastFn;
+    fn.toast = fn;
+    return fn;
 }
