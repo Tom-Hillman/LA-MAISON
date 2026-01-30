@@ -1,13 +1,14 @@
-import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 
+type Variant = "default" | "destructive";
 type ToastKind = "success" | "error" | "info";
+
+type ToastCall = {
+    title?: string;
+    description?: string;
+    variant?: Variant;
+    duration?: number;
+};
 
 type ToastItem = {
     id: string;
@@ -16,16 +17,14 @@ type ToastItem = {
     message: string;
 };
 
-type ToastContextValue = {
-    toast: (t: {
-        kind: ToastKind;
-        title?: string;
-        message: string;
-        durationMs?: number;
-    }) => void;
-};
+type ToastFn = (t: ToastCall) => void;
 
-const ToastContext = createContext<ToastContextValue | null>(null);
+const ToastContext = createContext<ToastFn | null>(null);
+
+function variantToKind(variant?: Variant): ToastKind {
+    if (variant === "destructive") return "error";
+    return "info";
+}
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<ToastItem[]>([]);
@@ -39,27 +38,24 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const toast = useCallback(
-        ({
-             kind,
-             title,
-             message,
-             durationMs = 3200,
-         }: {
-            kind: ToastKind;
-            title?: string;
-            message: string;
-            durationMs?: number;
-        }) => {
+        ({ title, description, variant = "default", duration = 3200 }: ToastCall) => {
+            const message = (description ?? "").trim();
             const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-            const next: ToastItem = { id, kind, title, message };
+
+            const next: ToastItem = {
+                id,
+                kind: variantToKind(variant),
+                title: title?.trim() || undefined,
+                message: message || " ",
+            };
 
             setItems((prev) => [next, ...prev].slice(0, 3));
-            timers.current[id] = window.setTimeout(() => remove(id), durationMs);
+            timers.current[id] = window.setTimeout(() => remove(id), duration);
         },
         [remove]
     );
 
-    const value = useMemo(() => ({ toast }), [toast]);
+    const value = useMemo(() => toast, [toast]);
 
     return (
         <ToastContext.Provider value={value}>
@@ -73,28 +69,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                         className={[
                             "relative overflow-hidden rounded-2xl border bg-white/90 p-4 shadow-xl backdrop-blur",
                             "transition-all duration-200",
-                            t.kind === "success" ? "border-emerald-200" : "",
-                            t.kind === "error" ? "border-red-200" : "",
-                            t.kind === "info" ? "border-slate-200" : "",
+                            t.kind === "error" ? "border-red-200" : "border-slate-200",
                         ].join(" ")}
                     >
                         {/* accent bar */}
                         <div
                             className={[
                                 "absolute left-0 top-0 h-full w-1.5",
-                                t.kind === "success" ? "bg-emerald-500" : "",
-                                t.kind === "error" ? "bg-red-500" : "",
-                                t.kind === "info" ? "bg-slate-500" : "",
+                                t.kind === "error" ? "bg-red-500" : "bg-slate-500",
                             ].join(" ")}
                         />
 
                         <div className="flex items-start gap-3">
                             <div className="min-w-0 flex-1">
-                                {t.title && (
-                                    <div className="text-sm font-semibold text-slate-900">
-                                        {t.title}
-                                    </div>
-                                )}
+                                {t.title && <div className="text-sm font-semibold text-slate-900">{t.title}</div>}
                                 <div className="text-sm text-slate-600">{t.message}</div>
                             </div>
 
@@ -114,8 +102,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-export function useToast() {
-    const ctx = useContext(ToastContext);
-    if (!ctx) throw new Error("useToast must be used inside <ToastProvider>");
-    return ctx;
+export function useToast(): ToastFn {
+    const toast = useContext(ToastContext);
+    if (!toast) throw new Error("useToast must be used inside <ToastProvider>");
+    return toast;
 }
