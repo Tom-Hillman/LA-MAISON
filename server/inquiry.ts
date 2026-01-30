@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from "express";
-import nodemailer from "nodemailer";
 import https from "https";
 import querystring from "querystring";
 
@@ -13,7 +12,7 @@ type InquiryBody = {
 function postFormSubmit(
     token: string,
     fields: Record<string, string>,
-    timeoutMs = 12_000
+    timeoutMs = 12000
 ): Promise<{ status: number; body: string }> {
     return new Promise((resolve, reject) => {
         const postData = querystring.stringify(fields);
@@ -33,16 +32,14 @@ function postFormSubmit(
                 let data = "";
                 res.setEncoding("utf8");
                 res.on("data", (chunk) => (data += chunk));
-                res.on("end", () => {
-                    resolve({ status: res.statusCode || 0, body: data });
-                });
+                res.on("end", () => resolve({ status: res.statusCode || 0, body: data }));
             }
         );
 
         req.on("error", reject);
 
         req.setTimeout(timeoutMs, () => {
-            req.destroy(new Error(`FormSubmit request timed out after ${timeoutMs}ms`));
+            req.destroy(new Error(`FormSubmit timeout after ${timeoutMs}ms`));
         });
 
         req.write(postData);
@@ -52,95 +49,44 @@ function postFormSubmit(
 
 export function registerInquiryRoute(app: Express) {
     app.post("/api/inquiry", async (req: Request, res: Response) => {
-        const startedAt = Date.now();
-
         try {
             const { name, email, message, listingId } = (req.body || {}) as InquiryBody;
 
-            if (!email || !message) {
-                return res.status(400).send("Missing email or message");
-            }
+            if (!email || !message) return res.status(400).send("Missing email or message");
+
+            // IMPORTANT: Put your token here OR in env
+            const token = (process.env.FORMSUBMIT_TOKEN || "c1099dea6554dbe112294ce151bc6f04").trim();
 
             const subject = listingId ? `New inquiry: ${listingId}` : "New inquiry: La Maison";
 
-            const plainText = [
-                `Name: ${name || "(not provided)"}`,
-                `Email: ${email}`,
-                listingId ? `Listing: ${listingId}` : "",
-                "",
-                "Message:",
+            const fields: Record<string, string> = {
+                name: name || "",
+                email,
                 message,
-            ]
-                .filter(Boolean)
-                .join("\n");
+                listingId: listingId || "",
+                _subject: subject,
+                _replyto: email,
+                _template: "table",
+                _captcha: "false",
+            };
 
-            // =========================================================
-            // 1) Preferred: FormSubmit (what worked for you before)
-            // =========================================================
-            const formsubmitToken = String(process.env.FORMSUBMIT_TOKEN || "").trim();
+            const r = await postFormSubmit(token, fields, 12000);
 
-            if (formsubmitToken) {
-                const fields: Record<string, string> = {
-                    name: name || "",
-                    email,
-                    message,
-                    listingId: listingId || "",
-                    _subject: subject,
-                    _replyto: email,
-                    _template: "table",
-                };
-
-                const r = await postFormSubmit(formsubmitToken, fields, 12_000);
-
-                if (r.status >= 200 && r.status < 300) {
-                    return res.status(200).json({ ok: true, provider: "formsubmit" });
-                }
-
-                console.error("[inquiry] FormSubmit failed:", {
+            // If FormSubmit returns non-2xx, return the body so you can see why
+            if (r.status < 200 || r.status >= 300) {
+                console.error("[inquiry] FormSubmit status:", r.status, "body:", r.body);
+                return res.status(500).json({
+                    ok: false,
+                    error: "FormSubmit failed",
                     status: r.status,
-                    body: (r.body || "").slice(0, 800),
+                    body: r.body,
                 });
-
-                return res.status(500).send("Failed to send email");
             }
 
-            // =========================================================
-            // 2) Fallback: SMTP (only if you want it)
-            // =========================================================
-            const host = String(process.env.SMTP_HOST || "").trim();
-            const port = Number(process.env.SMTP_PORT || "587");
-            const user = String(process.env.SMTP_USER || "").trim();
-            const pass = String(process.env.SMTP_PASS || "").trim();
-            const to = String(process.env.INQUIRY_TO || user).trim();
-
-            if (!host || !user || !pass || !to) {
-                return res
-                    .status(500)
-                    .send("Email not configured: set FORMSUBMIT_TOKEN (recommended) or SMTP_HOST/SMTP_USER/SMTP_PASS/INQUIRY_TO");
-            }
-
-            const transporter = nodemailer.createTransport({
-                host,
-                port,
-                secure: port === 465,
-                auth: { user, pass },
-                connectionTimeout: 10_000,
-                greetingTimeout: 10_000,
-                socketTimeout: 12_000,
-            });
-
-            await transporter.sendMail({
-                from: `"La Maison Website" <${user}>`,
-                to,
-                replyTo: email,
-                subject,
-                text: plainText,
-            });
-
-            return res.status(200).json({ ok: true, provider: "smtp" });
+            return res.status(200).json({ ok: true, provider: "formsubmit" });
         } catch (e: any) {
-            console.error("[inquiry] Failed:", e, "ms:", Date.now() - startedAt);
-            return res.status(500).send("Failed to send email");
+            console.error("[inquiry] Error:", e?.message || e);
+            return res.status(500).json({ ok: false, error: "Failed to send", detail: String(e?.message || e) });
         }
     });
 }
