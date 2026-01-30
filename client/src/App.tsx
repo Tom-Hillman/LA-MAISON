@@ -1,5 +1,6 @@
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect, useRef } from "react";
+import { Toaster } from "sonner";
 
 import Home from "@/pages/home";
 import Property from "@/pages/property";
@@ -11,7 +12,9 @@ import Property from "@/pages/property";
  */
 function useScrollRestoration() {
     const [location] = useLocation();
-    const lastPathRef = useRef<string>(window.location.pathname + window.location.search + window.location.hash);
+    const lastPathRef = useRef<string>(
+        window.location.pathname + window.location.search + window.location.hash
+    );
     const isPopRef = useRef(false);
     const positionsRef = useRef<Map<string, number>>(new Map());
 
@@ -29,7 +32,8 @@ function useScrollRestoration() {
 
     useEffect(() => {
         const onScroll = () => {
-            const key = window.location.pathname + window.location.search + window.location.hash;
+            const key =
+                window.location.pathname + window.location.search + window.location.hash;
             positionsRef.current.set(key, window.scrollY);
         };
         window.addEventListener("scroll", onScroll, { passive: true });
@@ -37,7 +41,8 @@ function useScrollRestoration() {
     }, []);
 
     useEffect(() => {
-        const key = window.location.pathname + window.location.search + window.location.hash;
+        const key =
+            window.location.pathname + window.location.search + window.location.hash;
 
         // Save last route scroll before route changes
         const prevKey = lastPathRef.current;
@@ -57,12 +62,17 @@ export default function App() {
     useScrollRestoration();
 
     return (
-        <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/properties/:id" component={Property} />
-            <Route>
-                <Home />
-            </Route>
-        </Switch>
+        <>
+            {/* Beautiful site-wide notifications */}
+            <Toaster richColors position="top-right" />
+
+            <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/properties/:id" component={Property} />
+                <Route>
+                    <Home />
+                </Route>
+            </Switch>
+        </>
     );
 }
