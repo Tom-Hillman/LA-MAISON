@@ -7,119 +7,114 @@ type InquiryBody = {
     listingId?: string;
 };
 
-function safeTrim(v: unknown) {
-    return typeof v === "string" ? v.trim() : "";
-}
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
 export function registerInquiryRoute(app: Express) {
     app.post("/api/inquiry", async (req: Request, res: Response) => {
         const startedAt = Date.now();
 
         try {
-            const { name, email, message, listingId } = (req.body || {}) as InquiryBody;
+            const body = (req.body || {}) as InquiryBody;
 
-            const fromEmail = safeTrim(email);
-            const msg = safeTrim(message);
+            const name = (body.name || "").trim();
+            const email = (body.email || "").trim();
+            const message = (body.message || "").trim();
+            const listingId = (body.listingId || "").trim();
 
-            if (!fromEmail || !msg) {
-                return res.status(400).json({ ok: false, error: "Missing email or message" });
+            // ---------- Validation ----------
+            const fieldErrors: Record<string, string> = {};
+
+            if (!email) fieldErrors.email = "Please enter your email.";
+            else if (!emailRegex.test(email)) fieldErrors.email = "That email doesn’t look valid.";
+
+            if (!message) fieldErrors.message = "Please write a message.";
+            else if (message.length < 10) fieldErrors.message = "Please add a bit more detail (10+ characters).";
+
+            if (Object.keys(fieldErrors).length) {
+                return res.status(400).json({
+                    ok: false,
+                    error: "Validation error",
+                    fieldErrors,
+                });
             }
 
-            const token = safeTrim(process.env.FORMSUBMIT_TOKEN);
+            const token = (process.env.FORMSUBMIT_TOKEN || "").trim();
             if (!token) {
-                // IMPORTANT: in Render you MUST set FORMSUBMIT_TOKEN in Env Vars
-                return res.status(500).json({ ok: false, error: "Missing FORMSUBMIT_TOKEN env var" });
+                return res.status(500).json({
+                    ok: false,
+                    error: "Missing FORMSUBMIT_TOKEN env var",
+                    detail: "Set FORMSUBMIT_TOKEN in your Render environment variables.",
+                });
             }
-
-            // Node 18+ has fetch. If your runtime is older, this will tell you immediately.
-            if (typeof fetch !== "function") {
-                return res.status(500).json({ ok: false, error: "Server runtime has no fetch() (need Node 18+)" });
-            }
-
-            const publicOrigin =
-                safeTrim(process.env.PUBLIC_ORIGIN) || "https://la-maison.onrender.com";
 
             const subject = listingId ? `New inquiry: ${listingId}` : "New inquiry: La Maison";
 
-            // FormSubmit AJAX endpoint
+            // FormSubmit expects x-www-form-urlencoded
+            const form = new URLSearchParams();
+            form.set("name", name || "");
+            form.set("email", email);
+            form.set("message", message);
+            if (listingId) form.set("listingId", listingId);
+
+            // FormSubmit controls
+            form.set("_subject", subject);
+            form.set("_replyto", email);
+            form.set("_template", "table");
+
+            // IMPORTANT: send to ajax endpoint
             const url = `https://formsubmit.co/ajax/${encodeURIComponent(token)}`;
 
-            const body = new URLSearchParams({
-                name: safeTrim(name),
-                email: fromEmail,
-                message: msg,
-                listingId: safeTrim(listingId),
-                _subject: subject,
-                _replyto: fromEmail,
-                _template: "table",
-            });
-
-            // Timeout so the client never “spins forever”
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 12_000);
+            const timeout = setTimeout(() => controller.abort(), 12000);
+
+            let status = 0;
+            let respText = "";
 
             try {
                 const resp = await fetch(url, {
                     method: "POST",
                     headers: {
                         Accept: "application/json",
-                        "Content-Type": "application/x-www-form-urlencoded",
-
-                        // These are CRITICAL for FormSubmit to treat it as a real website submission.
-                        Origin: publicOrigin,
-                        Referer: publicOrigin.endsWith("/") ? publicOrigin : publicOrigin + "/",
-
-                        // Some edge cases behave better with a UA present.
-                        "User-Agent":
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
+                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
                     },
-                    body,
+                    body: form,
                     signal: controller.signal,
                 });
 
-                // Try JSON first (what we asked for).
-                let data: any = null;
-                let rawText = "";
-                const ct = resp.headers.get("content-type") || "";
+                status = resp.status;
+                respText = await resp.text();
 
-                if (ct.includes("application/json")) {
-                    try {
-                        data = await resp.json();
-                    } catch {
-                        data = null;
-                    }
-                } else {
-                    rawText = await resp.text();
-                }
-
-                // FormSubmit sometimes returns 200 + success:false (THIS WAS YOUR ISSUE).
-                const successFlag =
-                    (data && (data.success === true || data.success === "true")) || false;
-
-                if (!resp.ok || (data && data.success === "false") || (data && successFlag === false)) {
-                    console.error("[inquiry] FormSubmit rejected:", {
-                        status: resp.status,
-                        data,
-                        rawPreview: rawText.slice(0, 300),
+                if (!resp.ok) {
+                    console.error("[inquiry] FormSubmit failed:", {
+                        status,
                         ms: Date.now() - startedAt,
-                        origin: publicOrigin,
+                        bodyPreview: respText.slice(0, 300),
                     });
 
                     return res.status(502).json({
                         ok: false,
-                        error: "FormSubmit rejected the request",
-                        detail: data?.message || "Check Origin/Referer + token activation",
+                        error: "FormSubmit failed",
+                        detail: "Could not send message. Please try again in a moment.",
                     });
                 }
 
-                console.log("[inquiry] formsubmit ok:", { status: resp.status, ms: Date.now() - startedAt });
+                console.log("[inquiry] sent via FormSubmit:", {
+                    status,
+                    ms: Date.now() - startedAt,
+                    bodyPreview: respText.slice(0, 120),
+                });
+
                 return res.status(200).json({ ok: true, provider: "formsubmit" });
             } finally {
                 clearTimeout(timeout);
             }
         } catch (e: any) {
-            console.error("[inquiry] failed:", e);
-            return res.status(500).json({ ok: false, error: "Failed to send inquiry" });
+            console.error("[inquiry] error:", e, "ms:", Date.now() - startedAt);
+            return res.status(500).json({
+                ok: false,
+                error: "Failed to send email",
+                detail: "Server error. Please try again shortly.",
+            });
         }
     });
 }
