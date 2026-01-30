@@ -669,7 +669,6 @@ function WhatsAppFixedButton() {
         </motion.a>
     );
 }
-
 // ---------------- API ----------------
 type InquiryPayload = { name: string; email: string; message: string; listingId?: string };
 
@@ -681,21 +680,42 @@ type InquiryError =
     | { code: "FORMSUBMIT_FAILED"; message: string };
 
 async function sendInquiry(payload: InquiryPayload): Promise<void> {
+    // Build FormSubmit-compatible request (avoid JSON/CORS preflight issues)
+    const subject = payload.listingId
+        ? `New inquiry: ${payload.listingId}`
+        : "New inquiry: La Maison";
+
+    const form = new URLSearchParams();
+    form.set("name", payload.name ?? "");
+    form.set("email", payload.email ?? "");
+    form.set("message", payload.message ?? "");
+    if (payload.listingId) form.set("listingId", payload.listingId);
+
+    // FormSubmit extras
+    form.set("_subject", subject);
+    form.set("_replyto", payload.email ?? "");
+    form.set("_template", "table");
+    // Optional tweaks if you want:
+    // form.set("_captcha", "false");
+
     let res: Response;
 
     try {
-        res = await fetch("/api/inquiry", {
+        res = await fetch("https://formsubmit.co/ajax/c1099dea6554dbe112294ce151bc6f04", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            },
+            body: form.toString(),
         });
     } catch {
-        throw { code: "NETWORK", message: "Network error. Please check your connection and try again." } as InquiryError;
+        throw {
+            code: "NETWORK",
+            message: "Network error. Please check your connection and try again.",
+        } as InquiryError;
     }
 
-    if (res.ok) return;
-
-    // Try to parse JSON error (your server should return { ok:false, error:{code,message} } or { message } )
     const text = await res.text().catch(() => "");
     let data: any = null;
     try {
@@ -704,41 +724,55 @@ async function sendInquiry(payload: InquiryPayload): Promise<void> {
         data = null;
     }
 
-    const msgFromJson =
-        data?.error?.message ||
+    // If OK, verify success flag if present
+    if (res.ok) {
+        const success = data?.success;
+        const ok =
+            success === true ||
+            success === "true" ||
+            typeof success === "undefined"; // sometimes FormSubmit doesn't include it
+        if (ok) return;
+    }
+
+    // Try to extract a useful message from FormSubmit
+    const rawMessage =
         data?.message ||
-        (typeof data === "string" ? data : "") ||
-        "";
+        data?.error ||
+        (typeof text === "string" ? text : "") ||
+        "Failed to send. Please try again in a moment, or email us directly.";
 
-    const codeFromJson = data?.error?.code;
+    const lower = String(rawMessage).toLowerCase();
 
-    if (codeFromJson === "FORMSUBMIT_NEEDS_ACTIVATION") {
+    // Heuristic: activation / verification / blocked by bot protection
+    const needsActivation =
+        lower.includes("activate") ||
+        lower.includes("activation") ||
+        lower.includes("verify") ||
+        lower.includes("verification") ||
+        lower.includes("needs activation");
+
+    if (needsActivation) {
         throw {
             code: "FORMSUBMIT_NEEDS_ACTIVATION",
             message: "Email system needs activation. Please try again shortly.",
         } as InquiryError;
     }
 
-    if (codeFromJson === "FORMSUBMIT_FAILED") {
-        throw {
-            code: "FORMSUBMIT_FAILED",
-            message: msgFromJson || "Failed to send. Please try again in a moment, or email us directly.",
-        } as InquiryError;
-    }
-
-    // Express body-parser JSON errors etc.
-    if (res.status === 400) {
+    // Treat known request issues as validation (rare, but helps UX)
+    if (res.status === 400 || lower.includes("required") || lower.includes("invalid")) {
         throw {
             code: "VALIDATION",
-            message: msgFromJson || "Please check the form fields and try again.",
+            message: rawMessage,
         } as InquiryError;
     }
 
+    // Everything else = upstream failed (403/429/5xx etc.)
     throw {
-        code: "SERVER",
-        message: msgFromJson || "Failed to send. Please try again in a moment.",
+        code: "FORMSUBMIT_FAILED",
+        message: rawMessage || "Failed to send. Please try again in a moment, or email us directly.",
     } as InquiryError;
 }
+
 function isValidEmail(email: string) {
     // simple but effective
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -752,13 +786,41 @@ function validateInquiry(
     const msg = payload.message.trim();
     const name = payload.name.trim();
 
-    if (!email) return { ok: false, field: "email", message: lang === "en" ? "Please enter your email." : "Por favor ingresa tu correo." };
-    if (!isValidEmail(email)) return { ok: false, field: "email", message: lang === "en" ? "Please enter a valid email." : "Por favor ingresa un correo válido." };
-    if (!msg) return { ok: false, field: "message", message: lang === "en" ? "Please enter a message." : "Por favor escribe un mensaje." };
-    if (msg.length < 8) return { ok: false, field: "message", message: lang === "en" ? "Message is too short." : "El mensaje es muy corto." };
+    if (!email)
+        return {
+            ok: false,
+            field: "email",
+            message: lang === "en" ? "Please enter your email." : "Por favor ingresa tu correo.",
+        };
+
+    if (!isValidEmail(email))
+        return {
+            ok: false,
+            field: "email",
+            message: lang === "en" ? "Please enter a valid email." : "Por favor ingresa un correo válido.",
+        };
+
+    if (!msg)
+        return {
+            ok: false,
+            field: "message",
+            message: lang === "en" ? "Please enter a message." : "Por favor escribe un mensaje.",
+        };
+
+    if (msg.length < 8)
+        return {
+            ok: false,
+            field: "message",
+            message: lang === "en" ? "Message is too short." : "El mensaje es muy corto.",
+        };
 
     // name optional, but if provided, require at least 2 chars
-    if (name && name.length < 2) return { ok: false, field: "name", message: lang === "en" ? "Name looks too short." : "El nombre es muy corto." };
+    if (name && name.length < 2)
+        return {
+            ok: false,
+            field: "name",
+            message: lang === "en" ? "Name looks too short." : "El nombre es muy corto.",
+        };
 
     return { ok: true };
 }
