@@ -5,7 +5,10 @@ import { createServer } from "http";
 import { registerInquiryRoute } from "./inquiry";
 
 const app = express();
+
+// Health checks
 app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+app.get("/api/health", (_req, res) => res.status(200).json({ ok: true, ts: Date.now() }));
 
 const httpServer = createServer(app);
 
@@ -20,7 +23,7 @@ app.use(
       verify: (req, _res, buf) => {
         req.rawBody = buf;
       },
-    }),
+    })
 );
 
 app.use(express.urlencoded({ extended: false }));
@@ -39,7 +42,7 @@ export function log(message: string, source = "express") {
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, any> | undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -62,20 +65,18 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  // Register inquiry route AFTER base middleware, BEFORE error handler
+  // Register inquiry route AFTER middleware, BEFORE error handler
   registerInquiryRoute(app);
 
+  // IMPORTANT: do NOT crash production on handled errors
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+
+    log(`Error ${status}: ${message}`, "express");
     res.status(status).json({ message });
 
-    // Don't crash the whole dev server on handled errors
-    if (process.env.NODE_ENV !== "production") {
-      log(`Error: ${message}`, "express");
-      return;
-    }
-    throw err;
+    // Never throw in production here — it kills the server and causes 502s
   });
 
   if (process.env.NODE_ENV === "production") {
@@ -87,7 +88,6 @@ app.use((req, res, next) => {
 
   const port = Number(process.env.PORT) || 5000;
 
-  // IMPORTANT: listen on the httpServer (not app.listen)
   httpServer.listen(port, "0.0.0.0", () => {
     console.log(`serving on http://0.0.0.0:${port}`);
   });
