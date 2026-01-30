@@ -1,6 +1,6 @@
 
-import { useState, useEffect, useMemo, useRef } from "react";
-
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useToast } from "@/components/Toast";
 import {
     motion,
     useInView,
@@ -545,7 +545,7 @@ function NoiseOverlay() {
 
 // ---------------- Particles ----------------
 function ParticleField() {
-    const canvasRef = useRef<HTMLCanvvasElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const pointer = usePointer();
 
     useEffect(() => {
@@ -671,18 +671,97 @@ function WhatsAppFixedButton() {
 }
 
 // ---------------- API ----------------
-async function sendInquiry(payload: { name: string; email: string; message: string; listingId?: string }) {
-    const res = await fetch("/api/inquiry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(text || "Failed to send inquiry");
+type InquiryPayload = { name: string; email: string; message: string; listingId?: string };
+
+type InquiryError =
+    | { code: "VALIDATION"; message: string; field?: "name" | "email" | "message" }
+    | { code: "NETWORK"; message: string }
+    | { code: "SERVER"; message: string }
+    | { code: "FORMSUBMIT_NEEDS_ACTIVATION"; message: string }
+    | { code: "FORMSUBMIT_FAILED"; message: string };
+
+async function sendInquiry(payload: InquiryPayload): Promise<void> {
+    let res: Response;
+
+    try {
+        res = await fetch("/api/inquiry", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    } catch {
+        throw { code: "NETWORK", message: "Network error. Please check your connection and try again." } as InquiryError;
     }
+
+    if (res.ok) return;
+
+    // Try to parse JSON error (your server should return { ok:false, error:{code,message} } or { message } )
+    const text = await res.text().catch(() => "");
+    let data: any = null;
+    try {
+        data = text ? JSON.parse(text) : null;
+    } catch {
+        data = null;
+    }
+
+    const msgFromJson =
+        data?.error?.message ||
+        data?.message ||
+        (typeof data === "string" ? data : "") ||
+        "";
+
+    const codeFromJson = data?.error?.code;
+
+    if (codeFromJson === "FORMSUBMIT_NEEDS_ACTIVATION") {
+        throw {
+            code: "FORMSUBMIT_NEEDS_ACTIVATION",
+            message: "Email system needs activation. Please try again shortly.",
+        } as InquiryError;
+    }
+
+    if (codeFromJson === "FORMSUBMIT_FAILED") {
+        throw {
+            code: "FORMSUBMIT_FAILED",
+            message: msgFromJson || "Failed to send. Please try again in a moment, or email us directly.",
+        } as InquiryError;
+    }
+
+    // Express body-parser JSON errors etc.
+    if (res.status === 400) {
+        throw {
+            code: "VALIDATION",
+            message: msgFromJson || "Please check the form fields and try again.",
+        } as InquiryError;
+    }
+
+    throw {
+        code: "SERVER",
+        message: msgFromJson || "Failed to send. Please try again in a moment.",
+    } as InquiryError;
+}
+function isValidEmail(email: string) {
+    // simple but effective
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function validateInquiry(
+    payload: { name: string; email: string; message: string },
+    lang: Lang
+): { ok: true } | { ok: false; message: string; field?: "name" | "email" | "message" } {
+    const email = payload.email.trim();
+    const msg = payload.message.trim();
+    const name = payload.name.trim();
+
+    if (!email) return { ok: false, field: "email", message: lang === "en" ? "Please enter your email." : "Por favor ingresa tu correo." };
+    if (!isValidEmail(email)) return { ok: false, field: "email", message: lang === "en" ? "Please enter a valid email." : "Por favor ingresa un correo válido." };
+    if (!msg) return { ok: false, field: "message", message: lang === "en" ? "Please enter a message." : "Por favor escribe un mensaje." };
+    if (msg.length < 8) return { ok: false, field: "message", message: lang === "en" ? "Message is too short." : "El mensaje es muy corto." };
+
+    // name optional, but if provided, require at least 2 chars
+    if (name && name.length < 2) return { ok: false, field: "name", message: lang === "en" ? "Name looks too short." : "El nombre es muy corto." };
+
+    return { ok: true };
+}
 async function shareListing(listing: Listing) {
     const url = `${window.location.origin}/properties/${listing.id}`;
     const title = `${listing.title} — ${listing.id}`;
@@ -699,7 +778,7 @@ async function shareListing(listing: Listing) {
 
     try {
         await navigator.clipboard.writeText(url);
-        alert("Link copied!");
+        toast({ title: lang === "en" ? "Copied" : "Copiado", description: lang === "en" ? "Link copied to clipboard." : "Enlace copiado." });
     } catch {
         prompt("Copy this link:", url);
     }
@@ -979,6 +1058,7 @@ function FilterDrawer({
 
 // ---------------- App ----------------
 export default function HomeMexicoSite() {
+    const toast = useToast();
     const [navOpen, setNavOpen] = useState(false);
     const [lang, setLang] = useState<Lang>("en");
     const [scrolled, setScrolled] = useState(false);
@@ -1423,17 +1503,45 @@ export default function HomeMexicoSite() {
                                             className="space-y-6"
                                             onSubmit={async (e) => {
                                                 e.preventDefault();
+
+                                                const payload = {
+                                                    name: contactName.trim(),
+                                                    email: contactEmail.trim(),
+                                                    message: contactMsg.trim(),
+                                                };
+
+                                                const v = validateInquiry(payload, lang);
+                                                if (!v.ok) {
+                                                    toast({
+                                                        title: lang === "en" ? "Please check the form" : "Revisa el formulario",
+                                                        description: v.message,
+                                                        variant: "destructive",
+                                                    });
+                                                    return;
+                                                }
+
                                                 try {
                                                     setSending(true);
-                                                    await sendInquiry({
-                                                        name: contactName.trim(),
-                                                        email: contactEmail.trim(),
-                                                        message: contactMsg.trim(),
-                                                    });
+                                                    await sendInquiry(payload);
+
+                                                    setContactName("");
+                                                    setContactEmail("");
                                                     setContactMsg("");
-                                                    alert(lang === "en" ? "Sent! We'll get back to you soon." : "¡Enviado! Te contactaremos pronto.");
+
+                                                    toast({
+                                                        title: lang === "en" ? "Message sent" : "Mensaje enviado",
+                                                        description: lang === "en" ? "Thanks — we’ll get back to you shortly." : "Gracias — te contactaremos pronto.",
+                                                    });
                                                 } catch (err: any) {
-                                                    alert(err?.message || (lang === "en" ? "Failed to send. Please try again." : "No se pudo enviar. Intenta de nuevo."));
+                                                    const message =
+                                                        err?.message ||
+                                                        (lang === "en" ? "Failed to send. Please try again." : "No se pudo enviar. Intenta de nuevo.");
+
+                                                    toast({
+                                                        title: lang === "en" ? "Couldn’t send" : "No se pudo enviar",
+                                                        description: message,
+                                                        variant: "destructive",
+                                                    });
                                                 } finally {
                                                     setSending(false);
                                                 }
@@ -1528,17 +1636,49 @@ export default function HomeMexicoSite() {
                             setInqMsg={setInqMsg}
                             onClose={() => setInquiry(null)}
                             onSend={async () => {
+                                const payload = {
+                                    name: inqName.trim(),
+                                    email: inqEmail.trim(),
+                                    message: (inqMsg || "").trim(),
+                                    listingId: inquiry.id,
+                                };
+
+                                const v = validateInquiry(
+                                    { name: payload.name, email: payload.email, message: payload.message },
+                                    lang
+                                );
+                                if (!v.ok) {
+                                    toast({
+                                        title: lang === "en" ? "Please check the form" : "Revisa el formulario",
+                                        description: v.message,
+                                        variant: "destructive",
+                                    });
+                                    return;
+                                }
+
                                 setSending(true);
                                 try {
-                                    await sendInquiry({
-                                        name: inqName.trim(),
-                                        email: inqEmail.trim(),
-                                        message: (inqMsg || "").trim(),
-                                        listingId: inquiry.id,
-                                    });
+                                    await sendInquiry(payload);
+
                                     setInquiry(null);
+                                    setInqName("");
+                                    setInqEmail("");
                                     setInqMsg("");
-                                    alert(lang === "en" ? "Sent! We'll get back to you soon." : "¡Enviado! Te contactaremos pronto.");
+
+                                    toast({
+                                        title: lang === "en" ? "Inquiry sent" : "Consulta enviada",
+                                        description: lang === "en" ? "We’ll get back to you shortly." : "Te contactaremos pronto.",
+                                    });
+                                } catch (err: any) {
+                                    const message =
+                                        err?.message ||
+                                        (lang === "en" ? "Failed to send. Please try again." : "No se pudo enviar. Intenta de nuevo.");
+
+                                    toast({
+                                        title: lang === "en" ? "Couldn’t send" : "No se pudo enviar",
+                                        description: message,
+                                        variant: "destructive",
+                                    });
                                 } finally {
                                     setSending(false);
                                 }
