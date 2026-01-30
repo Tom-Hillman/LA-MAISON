@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { useEffect, useRef } from "react";
 
 import Home from "@/pages/home";
@@ -10,6 +10,7 @@ import Property from "@/pages/property";
  * - On browser back/forward (popstate), restore previous scroll position
  */
 function useScrollRestoration() {
+    const [location] = useLocation();
     const lastPathRef = useRef<string>(window.location.pathname + window.location.search + window.location.hash);
     const isPopRef = useRef(false);
     const positionsRef = useRef<Map<string, number>>(new Map());
@@ -49,7 +50,7 @@ function useScrollRestoration() {
         } else {
             requestAnimationFrame(() => window.scrollTo(0, 0));
         }
-    });
+    }, [location]);
 }
 
 export default function App() {

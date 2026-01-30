@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef, type ReactNode, type SyntheticEvent } from "react";
+
+import { useState, useEffect, useMemo, useRef } from "react";
 
 import {
     motion,
@@ -50,7 +51,15 @@ import CENOTE_IMG from "@assets/generated_images/mystical_yucatan_cenote.png";
 import BEACH_IMG from "@assets/generated_images/luxury_beach_club_tulum.png";
 import TEXTILE_IMG from "@assets/generated_images/artisanal_mexican_textiles.png";
 
-import { LISTINGS, LISTING_IMAGES, formatUSD, getGoogleMapsUrl, type Listing } from "@/data/listings";
+import {
+    LISTINGS,
+    LISTING_IMAGES,
+    formatUSD,
+    type Listing,
+    getGoogleMapsUrl,
+    getGoogleMapsUrlForQuery,
+    getPostcode,
+} from "@/data/listings";
 
 // ---------------- Images ----------------
 const HERO_PRIMARY = HERO_PRIMARY_IMG;
@@ -60,7 +69,7 @@ const HERO_FALLBACK =
 function safeImage(primary: string, fallback: string) {
     return {
         src: primary,
-        onError: (e: SyntheticEvent<HTMLImageElement>) => {
+        onError: (e: React.SyntheticEvent<HTMLImageElement>) => {
             const img = e.currentTarget;
             if ((img as any).dataset?.fallbackApplied) return;
             (img as any).dataset.fallbackApplied = "1";
@@ -75,14 +84,10 @@ function cn(...classes: Array<string | false | undefined | null>) {
 
 type Lang = "en" | "es";
 
-function mapsSearchUrl(query: string) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-}
-
 // ---------------- Copy ----------------
 const copy = {
     en: {
-        nav: { home: "HOME", who: "WHY INVEST", properties: "PROPERTIES", lifestyle: "LIFESTYLE", contact: "CONTACT" },
+        nav: { home: "HOME", who: "WHY INVEST", properties: "PROPERTIES", lifestyle: "WHY US", contact: "CONTACT" },
         properties: { title: "PROPERTIES", inquire: "INQUIRE", share: "SHARE" },
         contact: { title: "CONTACT", send: "SEND MESSAGE", name: "Name", email: "Email", message: "Message" },
 
@@ -94,7 +99,7 @@ const copy = {
         },
 
         lifestyle: {
-            title: "Lifestyle",
+            title: "Why Us",
             subtitle:
                 "Tap to explore where we operate, how we take care of your home, and what LA MAISON actually does for buyers and owners.",
             cards: {
@@ -294,7 +299,7 @@ const copy = {
     },
 } as const;
 
-// ------------------ Body scroll lock (FIXED: restores correctly, supports nested modals) ----------------
+// ---------------- Body scroll lock (FIXED: restores correctly, supports nested modals) ----------------
 let __bodyLockCount = 0;
 let __bodyLockScrollY = 0;
 let __prevBodyOverflow = "";
@@ -439,7 +444,7 @@ function Reveal({
                     direction = "up",
                     className,
                 }: {
-    children: ReactNode;
+    children: React.ReactNode;
     delay?: number;
     direction?: "up" | "left" | "right";
     className?: string;
@@ -540,7 +545,7 @@ function NoiseOverlay() {
 
 // ---------------- Particles ----------------
 function ParticleField() {
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const canvasRef = useRef<HTMLCanvvasElement | null>(null);
     const pointer = usePointer();
 
     useEffect(() => {
@@ -657,10 +662,10 @@ function WhatsAppFixedButton() {
             whileTap={{ scale: 0.98 }}
             className="fixed bottom-5 right-5 z-40 border border-[#8B4513]/40 bg-black/70 px-4 py-3 text-xs tracking-[0.22em] text-[#F5E6D3] hover:bg-black/80"
         >
-            <span className="flex items-center gap-2">
-                <WhatsAppLogo className="h-4 w-4" />
-                <span>WHATSAPP</span>
-            </span>
+      <span className="flex items-center gap-2">
+        <WhatsAppLogo className="h-4 w-4" />
+        <span>WHATSAPP</span>
+      </span>
         </motion.a>
     );
 }
@@ -715,13 +720,11 @@ function PremiumOverlay({
     kicker: string;
     title: string;
     heroImg: string;
-    children: ReactNode;
+    children: React.ReactNode;
     onClose: () => void;
 }) {
-    // lock the BODY so the page behind doesn't scroll (fixes PC+mobile)
     useBodyScrollLock(open);
 
-    // ESC close
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => {
@@ -749,11 +752,9 @@ function PremiumOverlay({
                         transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* scroll container */}
                         <div className="h-full overflow-y-auto overscroll-contain">
                             <div className="min-h-screen px-4 md:px-8 py-8 md:py-12">
                                 <div className="max-w-5xl mx-auto bg-[#F5F1EA] border border-black/10 shadow-2xl overflow-hidden">
-                                    {/* Hero header */}
                                     <div className="relative h-56 md:h-72">
                                         <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -771,10 +772,8 @@ function PremiumOverlay({
                                         </button>
                                     </div>
 
-                                    {/* Content */}
                                     <div className="p-6 md:p-10">{children}</div>
 
-                                    {/* Footer CTA strip */}
                                     <div className="border-t border-black/10 bg-white px-6 md:px-10 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                                         <div>
                                             <div className="text-[10px] tracking-[0.28em] uppercase text-black/60">Contact</div>
@@ -782,18 +781,14 @@ function PremiumOverlay({
                                                 <span className="font-medium text-black">+34 667 640 713</span> •{" "}
                                                 <span className="font-medium text-black">lamaisonmexico@gmail.com</span>
                                             </div>
-                                            <div className="mt-1 text-xs text-black/50">Address: by appointment</div>
+                                            <div className="mt-1 text-xs text-black/50">By Appointment</div>
                                         </div>
-                                        <Button
-                                            className="rounded-none bg-[#1a1a1a] hover:bg-[#B78454] text-white px-6"
-                                            onClick={onClose}
-                                        >
+                                        <Button className="rounded-none bg-[#1a1a1a] hover:bg-[#B78454] text-white px-6" onClick={onClose}>
                                             Close
                                         </Button>
                                     </div>
                                 </div>
 
-                                {/* bottom spacer */}
                                 <div className="h-10" />
                             </div>
                         </div>
@@ -816,7 +811,7 @@ const PRICE_PRESETS = [
     { label: "$900k+", min: 900000, max: Infinity },
 ];
 
-function Pill({ active, children, onClick }: { active: boolean; children: ReactNode; onClick: () => void }) {
+function Pill({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
     return (
         <button
             type="button"
@@ -861,7 +856,6 @@ function FilterDrawer({
     resultCount: number;
 }) {
     useBodyScrollLock(open);
-
     const t = copy[lang].filters;
 
     return (
@@ -886,7 +880,9 @@ function FilterDrawer({
                             <div className="p-6 md:p-8 border-b border-black/10 flex items-center justify-between">
                                 <div>
                                     <div className="text-[10px] tracking-[0.28em] uppercase text-black/60">{t.title}</div>
-                                    <div className="mt-2 font-serif text-2xl">{resultCount} {t.results}</div>
+                                    <div className="mt-2 font-serif text-2xl">
+                                        {resultCount} {t.results}
+                                    </div>
                                 </div>
                                 <button onClick={onClose} className="p-2 border border-black/10 bg-white hover:border-black/30">
                                     <X className="w-5 h-5" />
@@ -894,18 +890,16 @@ function FilterDrawer({
                             </div>
 
                             <div className="p-6 md:p-8 space-y-8">
-                                {/* Search */}
                                 <div>
                                     <div className="text-[10px] tracking-[0.28em] uppercase text-black/60 mb-3">{t.search}</div>
                                     <Input
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         className="rounded-none border-black/10 bg-white"
-                                        placeholder={lang === "en" ? "Try “tulum”, “hacienda”, “2 beds”…" : "Ej: “tulum”, “hacienda”, “2 rec”…"}
+                                        placeholder={lang === "en" ? "Try “tulum”, “hacienda”, …" : "Ej: “tulum”, “hacienda”, “2 rec”…"}
                                     />
                                 </div>
 
-                                {/* Location */}
                                 <div>
                                     <div className="text-[10px] tracking-[0.28em] uppercase text-black/60 mb-3">{t.location}</div>
                                     <div className="flex flex-wrap gap-2">
@@ -913,8 +907,8 @@ function FilterDrawer({
                                             <Pill key={loc} active={selectedLocations.has(loc)} onClick={() => toggleLocation(loc)}>
                                                 {selectedLocations.has(loc) ? (
                                                     <span className="inline-flex items-center gap-2">
-                                                        <Check className="w-3 h-3" /> {loc}
-                                                    </span>
+                            <Check className="w-3 h-3" /> {loc}
+                          </span>
                                                 ) : (
                                                     loc
                                                 )}
@@ -923,7 +917,6 @@ function FilterDrawer({
                                     </div>
                                 </div>
 
-                                {/* Type */}
                                 <div>
                                     <div className="text-[10px] tracking-[0.28em] uppercase text-black/60 mb-3">{t.type}</div>
                                     <div className="flex flex-wrap gap-2">
@@ -931,8 +924,8 @@ function FilterDrawer({
                                             <Pill key={tp} active={selectedTypes.has(tp)} onClick={() => toggleType(tp)}>
                                                 {selectedTypes.has(tp) ? (
                                                     <span className="inline-flex items-center gap-2">
-                                                        <Check className="w-3 h-3" /> {tp}
-                                                    </span>
+                            <Check className="w-3 h-3" /> {tp}
+                          </span>
                                                 ) : (
                                                     tp
                                                 )}
@@ -941,7 +934,6 @@ function FilterDrawer({
                                     </div>
                                 </div>
 
-                                {/* Price presets */}
                                 <div>
                                     <div className="text-[10px] tracking-[0.28em] uppercase text-black/60 mb-3">{t.presets}</div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -997,31 +989,25 @@ export default function HomeMexicoSite() {
 
     const [, setLocation] = useLocation();
 
-    // Inquiry modal
     const [inquiry, setInquiry] = useState<Listing | null>(null);
     const [sending, setSending] = useState(false);
 
-    // Overlays
     const [overlay, setOverlay] = useState<OverlayKey | null>(null);
 
-    // Filters
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [locSet, setLocSet] = useState<Set<string>>(new Set());
     const [typeSet, setTypeSet] = useState<Set<string>>(new Set());
     const [pricePreset, setPricePreset] = useState<string | null>(null);
 
-    // Contact form state
     const [contactName, setContactName] = useState("");
     const [contactEmail, setContactEmail] = useState("");
     const [contactMsg, setContactMsg] = useState("");
 
-    // Inquiry modal state
     const [inqName, setInqName] = useState("");
     const [inqEmail, setInqEmail] = useState("");
     const [inqMsg, setInqMsg] = useState("");
 
-    // Track whether any modal is open (used for Lenis only — DO NOT body-lock here)
     const anyModalOpen = Boolean(overlay) || Boolean(inquiry) || filtersOpen;
 
     useEffect(() => {
@@ -1030,7 +1016,6 @@ export default function HomeMexicoSite() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    // Lenis Smooth Scroll ONLY when not in modal/overlay, to avoid scroll bugs
     useEffect(() => {
         if (!preloaderDone) return;
         if (anyModalOpen) return;
@@ -1108,7 +1093,6 @@ export default function HomeMexicoSite() {
     const filteredListings = useMemo(() => {
         let list = [...LISTINGS];
 
-        // search (title + location + type + id)
         const q = search.trim().toLowerCase();
         if (q) {
             list = list.filter((l) => {
@@ -1117,29 +1101,38 @@ export default function HomeMexicoSite() {
             });
         }
 
-        // location set
         if (locSet.size > 0) {
             list = list.filter((l) => locSet.has(l.location));
         }
 
-        // type set
         if (typeSet.size > 0) {
             list = list.filter((l) => typeSet.has(l.type));
         }
 
-        // price preset
         if (pricePreset) {
             const p = PRICE_PRESETS.find((x) => x.label === pricePreset);
-            if (p) {
-                list = list.filter((l) => l.priceUSD >= p.min && l.priceUSD <= p.max);
-            }
+            if (p) list = list.filter((l) => l.priceUSD >= p.min && l.priceUSD <= p.max);
         }
 
-        // keep stable ordering by id
         list.sort((a, b) => a.id.localeCompare(b.id));
-
         return list;
     }, [search, locSet, typeSet, pricePreset]);
+
+    // Map queries for the overlay location cards (with postcodes)
+    const overlayLocationQuery = (name: string) => {
+        switch (name) {
+            case "Playa del Carmen":
+                return "Centro, 77710 Playa del Carmen, Quintana Roo, Mexico";
+            case "Tulum":
+                return "Aldea Zama, 77760 Tulum, Quintana Roo, Mexico";
+            case "Cancún":
+                return "Zona Hotelera, 77500 Cancún, Quintana Roo, Mexico";
+            case "Mérida":
+                return "Centro, 97000 Mérida, Yucatán, Mexico";
+            default:
+                return `${name}, Mexico`;
+        }
+    };
 
     return (
         <>
@@ -1172,10 +1165,7 @@ export default function HomeMexicoSite() {
                     )}
                     style={scrolled ? { WebkitBackdropFilter: "blur(18px)", backdropFilter: "blur(18px)" } : undefined}
                 >
-                    <button
-                        onClick={() => go("home")}
-                        className="font-serif text-xl tracking-widest text-white mix-blend-difference"
-                    >
+                    <button onClick={() => go("home")} className="font-serif text-xl tracking-widest text-white mix-blend-difference">
                         LA MAISON
                     </button>
 
@@ -1193,17 +1183,11 @@ export default function HomeMexicoSite() {
                         </div>
 
                         <div className="flex items-center gap-2 text-xs font-medium tracking-widest z-50">
-                            <button
-                                onClick={() => setLang("en")}
-                                className={cn("px-2 py-1 transition-opacity", lang === "en" ? "opacity-100" : "opacity-50")}
-                            >
+                            <button onClick={() => setLang("en")} className={cn("px-2 py-1 transition-opacity", lang === "en" ? "opacity-100" : "opacity-50")}>
                                 EN
                             </button>
                             <span className="opacity-30">/</span>
-                            <button
-                                onClick={() => setLang("es")}
-                                className={cn("px-2 py-1 transition-opacity", lang === "es" ? "opacity-100" : "opacity-50")}
-                            >
+                            <button onClick={() => setLang("es")} className={cn("px-2 py-1 transition-opacity", lang === "es" ? "opacity-100" : "opacity-50")}>
                                 ES
                             </button>
                         </div>
@@ -1270,7 +1254,6 @@ export default function HomeMexicoSite() {
                         )}
                     </div>
 
-                    {/* Scroll goes to PROPERTIES */}
                     <motion.div
                         className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50 flex flex-col items-center gap-2 cursor-pointer"
                         animate={{ y: [0, 10, 0] }}
@@ -1330,6 +1313,12 @@ export default function HomeMexicoSite() {
                         setOverlay(null);
                         setInquiry(null);
                         setFiltersOpen(false);
+
+                        // ✅ FIX: always enter listing page at TOP
+                        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+                        document.documentElement.scrollTop = 0;
+                        document.body.scrollTop = 0;
+
                         setTimeout(() => setLocation(`/properties/${l.id}`), 0);
                     }}
                     onInquire={(l) => {
@@ -1351,7 +1340,6 @@ export default function HomeMexicoSite() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {/* LOCATIONS */}
                             <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.05}>
                                 <button type="button" onClick={() => setOverlay("locations")} className="absolute inset-0 z-20" aria-label="Open locations" />
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
@@ -1361,14 +1349,9 @@ export default function HomeMexicoSite() {
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-0" />
-                                <motion.img
-                                    src={BEACH_IMG}
-                                    alt="Locations"
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
+                                <motion.img src={BEACH_IMG} alt="Locations" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             </Reveal>
 
-                            {/* HOME CARE */}
                             <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.15}>
                                 <button type="button" onClick={() => setOverlay("homecare")} className="absolute inset-0 z-20" aria-label="Open home care" />
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
@@ -1378,14 +1361,9 @@ export default function HomeMexicoSite() {
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-0" />
-                                <motion.img
-                                    src={INTERIOR_IMG}
-                                    alt="Home Care"
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
+                                <motion.img src={INTERIOR_IMG} alt="Home Care" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             </Reveal>
 
-                            {/* ABOUT US */}
                             <Reveal className="relative group overflow-hidden aspect-video md:aspect-[16/9] cursor-pointer" delay={0.25}>
                                 <button type="button" onClick={() => setOverlay("about")} className="absolute inset-0 z-20" aria-label="Open about us" />
                                 <div className="absolute inset-0 z-10 p-8 flex flex-col justify-end">
@@ -1395,11 +1373,7 @@ export default function HomeMexicoSite() {
                                     </p>
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-0" />
-                                <motion.img
-                                    src={CENOTE_IMG}
-                                    alt="About Us"
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
+                                <motion.img src={CENOTE_IMG} alt="About Us" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             </Reveal>
                         </div>
                     </div>
@@ -1539,7 +1513,6 @@ export default function HomeMexicoSite() {
                         </div>
                     </div>
                 </footer>
-
                 {/* Inquiry Modal */}
                 <AnimatePresence>
                     {inquiry && (
@@ -1608,11 +1581,11 @@ export default function HomeMexicoSite() {
                                 {overlays.locations.list.map((x) => (
                                     <a
                                         key={x}
-                                        href={mapsSearchUrl(`${x}, Mexico`)}
+                                        href={getGoogleMapsUrlForQuery(overlayLocationQuery(x))}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="border border-black/10 bg-[#F5F1EA] px-4 py-3 flex items-center justify-between hover:border-black/30 transition-colors"
-                                        title={lang === "en" ? "Open in Google Maps" : "Abrir en Google Maps"}
+                                        title="Open in Google Maps"
                                     >
                                         <span className="text-sm">{x}</span>
                                         <MapPin className="w-4 h-4 text-black/40" />
@@ -1627,16 +1600,14 @@ export default function HomeMexicoSite() {
                             <div className="mt-6 border-t border-black/10 pt-5 text-sm text-black/70">
                                 <div className="flex items-start gap-3">
                                     <BadgeCheck className="w-5 h-5 text-[#B78454]" />
-                                    <p>
-                                        We typically start with a quick feasibility check: access, infrastructure, local reliability, and
-                                        serviceability.
-                                    </p>
+                                    <p>We typically start with a quick feasibility check: access, infrastructure, local reliability, and serviceability.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </PremiumOverlay>
 
+                {/* Homecare overlay */}
                 <PremiumOverlay
                     open={overlay === "homecare"}
                     kicker={overlays.homecare.kicker}
@@ -1688,6 +1659,7 @@ export default function HomeMexicoSite() {
                     </div>
                 </PremiumOverlay>
 
+                {/* About overlay */}
                 <PremiumOverlay
                     open={overlay === "about"}
                     kicker={overlays.about.kicker}
@@ -1783,16 +1755,12 @@ function PropertiesSection({
                     </div>
                 </Reveal>
 
-                {/* Filter bar */}
                 <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div className="text-xs tracking-[0.22em] uppercase text-black/60">
                         {lang === "en" ? "Curated selection" : "Selección curada"}
                     </div>
 
-                    <Button
-                        onClick={onOpenFilters}
-                        className="rounded-none bg-[#1a1a1a] hover:bg-[#B78454] text-white px-5"
-                    >
+                    <Button onClick={onOpenFilters} className="rounded-none bg-[#1a1a1a] hover:bg-[#B78454] text-white px-5">
                         <SlidersHorizontal className="w-4 h-4 mr-2" />
                         {lang === "en" ? "Filter" : "Filtrar"}
                     </Button>
@@ -1834,19 +1802,13 @@ function PropertyRow({
     onInquire: () => void;
     onShare: () => void;
 }) {
+    const postcode = getPostcode(l);
+
     return (
         <Reveal delay={index * 0.04}>
-            <motion.div
-                className="border border-black/10 bg-white overflow-hidden"
-                whileHover={{ y: -2 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            >
+            <motion.div className="border border-black/10 bg-white overflow-hidden" whileHover={{ y: -2 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}>
                 <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
-                    <button
-                        type="button"
-                        onClick={onOpen}
-                        className="relative h-[190px] md:h-full w-full overflow-hidden"
-                    >
+                    <button type="button" onClick={onOpen} className="relative h-[190px] md:h-full w-full overflow-hidden">
                         <motion.img
                             {...safeImage(l.image, fallback)}
                             alt={l.title}
@@ -1863,25 +1825,21 @@ function PropertyRow({
                                 <div className="text-[10px] tracking-[0.26em] uppercase text-[#5E5E5E]">
                                     {l.type} • {l.id}
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={onOpen}
-                                    className="mt-2 font-serif text-2xl text-[#1a1a1a] hover:text-[#B78454] transition-colors text-left"
-                                >
+                                <button type="button" onClick={onOpen} className="mt-2 font-serif text-2xl text-[#1a1a1a] hover:text-[#B78454] transition-colors text-left">
                                     {l.title}
                                 </button>
 
-                                {/* Location → Google Maps link (NEW) */}
+                                {/* ✅ Location now links to Google Maps + shows postcode */}
                                 <a
                                     href={getGoogleMapsUrl(l)}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="mt-2 inline-flex items-center gap-2 text-xs tracking-[0.14em] uppercase text-[#5E5E5E] hover:text-[#B78454] transition-colors"
-                                    title={lang === "en" ? "Open in Google Maps" : "Abrir en Google Maps"}
+                                    title="Open in Google Maps"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <MapPin className="w-3.5 h-3.5" />
-                                    {l.location}
+                                    <span>{l.location}{postcode ? ` • ${postcode}` : ""}</span>
                                 </a>
                             </div>
 
@@ -1891,21 +1849,19 @@ function PropertyRow({
                             </div>
                         </div>
 
-                        <div className="mt-4 text-sm text-[#5E5E5E] leading-relaxed line-clamp-2">
-                            {l.description[lang]}
-                        </div>
+                        <div className="mt-4 text-sm text-[#5E5E5E] leading-relaxed line-clamp-2">{l.description[lang]}</div>
 
                         <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
                             <div className="flex items-center gap-4 text-xs text-[#5E5E5E]">
+                <span className="flex items-center gap-1">
+                  <BedDouble className="w-3.5 h-3.5" /> {l.beds}
+                </span>
                                 <span className="flex items-center gap-1">
-                                    <BedDouble className="w-3.5 h-3.5" /> {l.beds}
-                                </span>
+                  <Bath className="w-3.5 h-3.5" /> {l.baths}
+                </span>
                                 <span className="flex items-center gap-1">
-                                    <Bath className="w-3.5 h-3.5" /> {l.baths}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Ruler className="w-3.5 h-3.5" /> {l.areaM2} m²
-                                </span>
+                  <Ruler className="w-3.5 h-3.5" /> {l.areaM2} m²
+                </span>
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -1919,19 +1875,11 @@ function PropertyRow({
                                     {copy[lang].properties.share}
                                 </button>
 
-                                <button
-                                    type="button"
-                                    onClick={onOpen}
-                                    className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors"
-                                >
+                                <button type="button" onClick={onOpen} className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors">
                                     OPEN
                                 </button>
 
-                                <button
-                                    type="button"
-                                    onClick={onInquire}
-                                    className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors"
-                                >
+                                <button type="button" onClick={onInquire} className="text-[10px] tracking-[0.26em] uppercase text-[#1a1a1a] hover:text-[#B78454] transition-colors">
                                     {copy[lang].properties.inquire}
                                 </button>
                             </div>
@@ -1972,7 +1920,6 @@ function InquiryModal({
     onClose: () => void;
     onSend: () => Promise<void>;
 }) {
-    // lock the body so the page behind does not scroll
     useBodyScrollLock(true);
 
     useEffect(() => {
@@ -1999,40 +1946,23 @@ function InquiryModal({
                 onClick={(e) => e.stopPropagation()}
                 className="bg-[#F5F1EA] max-w-2xl w-full border border-black/10 shadow-2xl overflow-hidden"
             >
-                {/* Header */}
                 <div className="flex items-start justify-between gap-6 px-6 md:px-8 py-6 border-b border-black/10 bg-white">
                     <div>
                         <div className="text-[10px] tracking-[0.28em] uppercase text-black/50">
                             {lang === "en" ? "Inquiry" : "Consulta"} • {inquiry.id}
                         </div>
                         <div className="mt-2 font-serif text-2xl md:text-3xl text-[#1a1a1a]">{inquiry.title}</div>
-
-                        {/* Location → Google Maps link (NEW) */}
                         <div className="mt-2 flex items-center gap-2 text-xs tracking-[0.14em] uppercase text-black/50">
                             <MapPin className="w-3.5 h-3.5" />
-                            <a
-                                href={getGoogleMapsUrl(inquiry)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="hover:text-[#B78454] transition-colors"
-                                title={lang === "en" ? "Open in Google Maps" : "Abrir en Google Maps"}
-                            >
-                                {inquiry.location}
-                            </a>{" "}
-                            • {formatUSD(inquiry.priceUSD)}
+                            {inquiry.location} • {formatUSD(inquiry.priceUSD)}
                         </div>
                     </div>
 
-                    <button
-                        onClick={onClose}
-                        className="p-2 border border-black/10 bg-white hover:border-black/30 transition-colors"
-                        aria-label="Close"
-                    >
+                    <button onClick={onClose} className="p-2 border border-black/10 bg-white hover:border-black/30 transition-colors" aria-label="Close">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Body */}
                 <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
                     <div className="relative h-44 md:h-full">
                         <img {...safeImage(inquiry.image, HERO_FALLBACK)} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -2040,24 +1970,11 @@ function InquiryModal({
                     </div>
 
                     <div className="p-6 md:p-8">
-                        <div className="text-[10px] tracking-[0.28em] uppercase text-black/50">
-                            {lang === "en" ? "Tell us what you want" : "Cuéntanos lo que buscas"}
-                        </div>
+                        <div className="text-[10px] tracking-[0.28em] uppercase text-black/50">{lang === "en" ? "Tell us what you want" : "Cuéntanos lo que buscas"}</div>
 
                         <div className="mt-5 space-y-4">
-                            <Input
-                                value={inqName}
-                                onChange={(e) => setInqName(e.target.value)}
-                                placeholder={copy[lang].contact.name}
-                                className="rounded-none border-black/10 bg-white"
-                            />
-                            <Input
-                                value={inqEmail}
-                                type="email"
-                                onChange={(e) => setInqEmail(e.target.value)}
-                                placeholder={copy[lang].contact.email}
-                                className="rounded-none border-black/10 bg-white"
-                            />
+                            <Input value={inqName} onChange={(e) => setInqName(e.target.value)} placeholder={copy[lang].contact.name} className="rounded-none border-black/10 bg-white" />
+                            <Input value={inqEmail} type="email" onChange={(e) => setInqEmail(e.target.value)} placeholder={copy[lang].contact.email} className="rounded-none border-black/10 bg-white" />
                             <textarea
                                 className="w-full border border-black/10 bg-white rounded-none p-3 text-sm focus:outline-none focus:border-[#B78454] min-h-[120px]"
                                 value={inqMsg}
@@ -2067,11 +1984,7 @@ function InquiryModal({
                         </div>
 
                         <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                            <Button
-                                disabled={sending}
-                                onClick={onSend}
-                                className="rounded-none bg-[#1a1a1a] hover:bg-[#B78454] text-white px-6 py-6 text-xs tracking-[0.22em] uppercase"
-                            >
+                            <Button disabled={sending} onClick={onSend} className="rounded-none bg-[#1a1a1a] hover:bg-[#B78454] text-white px-6 py-6 text-xs tracking-[0.22em] uppercase">
                                 {sending ? (lang === "en" ? "SENDING..." : "ENVIANDO...") : copy[lang].contact.send}
                             </Button>
 
@@ -2096,3 +2009,8 @@ function InquiryModal({
         </motion.div>
     );
 }
+
+
+
+
+
